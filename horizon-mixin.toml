@@ -1,0 +1,341 @@
+[mod]
+id = "bodymotion"
+version = "0.2.79"
+priority = 100
+
+[[module]]
+id = "runtime"
+file = "crates/horizon-client/src/game/client_ambient.rs"
+name = "native_bm_runtime"
+source = "runtime.rs"
+
+[[module]]
+id = "glue"
+file = "crates/horizon-client/src/game/client_ambient.rs"
+name = "native_bm_glue"
+source = "glue.rs"
+
+[[module]]
+id = "lantern"
+file = "crates/horizon-client/src/game/client_ambient.rs"
+name = "native_bm_lantern"
+source = "lantern_glue.rs"
+
+# The settings screen: the GUI, its sprites, and the screen
+# glue over the Options screen. These live in game.rs, where `Game` and
+# `Screen` are in scope.
+[[module]]
+id = "sprites"
+file = "crates/horizon-client/src/game.rs"
+name = "native_bm_sprites"
+source = "sprites.rs"
+
+[[module]]
+id = "gui"
+file = "crates/horizon-client/src/game.rs"
+name = "native_bm_gui"
+source = "gui.rs"
+
+[[module]]
+id = "screen"
+file = "crates/horizon-client/src/game.rs"
+name = "native_bm_screen"
+source = "screen.rs"
+
+[[module]]
+id = "anim"
+file = "crates/horizon-client/src/mobs/anim.rs"
+name = "native_bm_anim"
+source = "bm_anim.rs"
+visibility = "pub"
+
+[[module]]
+id = "atlas_slots_bm"
+file = "crates/horizon-client/src/game/atlas_slots.rs"
+name = "native_bm_atlas_slots"
+source = "atlas_slots_bm.rs"
+
+[[module]]
+id = "maps_bm"
+file = "crates/horizon-client/src/game.rs"
+name = "native_bm_maps"
+source = "maps_bm.rs"
+
+[[module]]
+id = "render_bm"
+file = "crates/horizon-client/src/mobs/render.rs"
+name = "native_bm_render"
+source = "render_bm.rs"
+visibility = "pub"
+
+[[injection]]
+id = "list"
+kind = "HEAD"
+target = "horizon_client::game::native_hooks::Game<'_>::native_mods"
+helper = "list.rs"
+bindings = [
+  { name = "mods", ty = "&mut Vec<crate::game::native_hooks::NativeMod>", value = "&mut *mods" },
+]
+
+[[injection]]
+id = "settings"
+kind = "HEAD"
+target = "horizon_client::game::native_hooks::Game<'_>::native_settings"
+helper = "settings.rs"
+bindings = [
+  { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+  { name = "mod_id", ty = "&str", value = "mod_id" },
+  { name = "buttons", ty = "&mut Vec<String>", value = "&mut *buttons" },
+]
+
+[[injection]]
+id = "click"
+kind = "HEAD"
+target = "horizon_client::game::native_hooks::Game<'_>::native_settings_click"
+helper = "click.rs"
+bindings = [
+  { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+  { name = "mod_id", ty = "&str", value = "mod_id" },
+  { name = "button", ty = "usize", value = "button" },
+]
+
+[[injection]]
+id = "frame"
+hook = "frame"
+hook_version = 1
+kind = "HEAD"
+helper = "bm_frame.rs"
+bindings = [
+  { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+]
+
+[[injection]]
+id = "setup-head"
+kind = "HEAD"
+target = "horizon_client::mobs::anim::setup"
+helper = "bm_setup_head.rs"
+bindings = [
+  { name = "m", ty = "&crate::mobs::Mob", value = "m" },
+  { name = "s", ty = "&crate::mobs::anim::State", value = "s" },
+]
+
+[[injection]]
+id = "visibility-head"
+kind = "HEAD"
+target = "horizon_client::mobs::anim::player_model_visibility"
+helper = "bm_visibility_head.rs"
+bindings = [
+  { name = "p", ty = "&mut crate::mobs::anim::Poses", value = "p" },
+]
+
+[[injection]]
+id = "warm"
+kind = "HEAD"
+target = "horizon_client::game::Game<'_>::entity_geometry"
+helper = "warm_bm.rs"
+bindings = [
+  { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+]
+
+[[injection]]
+id = "hero-map"
+kind = "HEAD"
+target = "horizon_client::game::mob_blocks::Game<'_>::held_item_geometry"
+helper = "held_map_bm.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "mob", ty = "&crate::mobs::Mob", value = "mob" },
+  { name = "camera", ty = "glam::DVec3", value = "camera" },
+  { name = "alpha", ty = "f64", value = "alpha" },
+  { name = "light", ty = "u32", value = "light" },
+  { name = "out", ty = "&mut Vec<crate::mesher::Vertex>", value = "out" },
+]
+
+[[injection]]
+id = "update-offhand"
+kind = "HEAD"
+target = "horizon_client::game::mob_blocks::Game<'_>::held_item_geometry"
+helper = "offhand_hiding_bm.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "mob", ty = "&crate::mobs::Mob", value = "mob" },
+]
+
+[[injection]]
+id = "bed-items"
+kind = "HEAD"
+cancellable = true
+target = "horizon_client::game::mob_blocks::Game<'_>::held_item_geometry"
+helper = "bed_items_bm.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "mob", ty = "&crate::mobs::Mob", value = "mob" },
+]
+
+[[injection]]
+id = "hero-lantern"
+kind = "HEAD"
+target = "horizon_client::game::mob_blocks::Game<'_>::held_item_geometry"
+helper = "lantern_bm.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "mob", ty = "&crate::mobs::Mob", value = "mob" },
+  { name = "camera", ty = "glam::DVec3", value = "camera" },
+  { name = "alpha", ty = "f64", value = "alpha" },
+  { name = "light", ty = "u32", value = "light" },
+  { name = "out", ty = "&mut Vec<crate::mesher::Vertex>", value = "out" },
+]
+
+[[injection]]
+id = "hide-lantern"
+kind = "HEAD"
+cancellable = true
+target = "horizon_client::game::item_draw::Game<'_>::resolve_item_in_hand"
+helper = "lantern_hide_bm.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "stack", ty = "&crate::items::ItemStack", value = "stack" },
+  { name = "display", ty = "horizon_assets::item_model::DisplayContext", value = "display" },
+  { name = "owner", ty = "Option<&horizon_assets::item_model::OwnerState>", value = "owner" },
+]
+
+[[injection]]
+id = "hide-map"
+kind = "HEAD"
+cancellable = true
+target = "horizon_client::game::item_draw::Game<'_>::resolve_item_in_hand"
+helper = "map_hide_bm.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "stack", ty = "&crate::items::ItemStack", value = "stack" },
+  { name = "display", ty = "horizon_assets::item_model::DisplayContext", value = "display" },
+  { name = "owner", ty = "Option<&horizon_assets::item_model::OwnerState>", value = "owner" },
+]
+
+[[injection]]
+id = "hide-offhand"
+kind = "HEAD"
+cancellable = true
+target = "horizon_client::game::item_draw::Game<'_>::resolve_item_in_hand"
+helper = "hide_offhand_bm.rs"
+bindings = [
+  { name = "stack", ty = "&crate::items::ItemStack", value = "stack" },
+  { name = "display", ty = "horizon_assets::item_model::DisplayContext", value = "display" },
+  { name = "owner", ty = "Option<&horizon_assets::item_model::OwnerState>", value = "owner" },
+]
+
+# The config screen over the Options screen, while it is open on the mod's page.
+[[injection]]
+id = "screen-render"
+hook = "screen_render_post"
+hook_version = 1
+kind = "HEAD"
+helper = "scr_render.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "batch", ty = "&mut horizon_client::hud::HudBatch", value = "&mut *batch" },
+  { name = "screen", ty = "&horizon_client::mod_api::NativeScreenView<'_>", value = "screen" },
+]
+
+# The Options screen stays hidden under it.
+[[injection]]
+id = "screen-cover"
+kind = "HEAD"
+cancellable = true
+target = "horizon_client::game::options::Game<'_>::draw_options"
+helper = "scr_cover.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+]
+
+# All of the screen's input while it is open.
+[[injection]]
+id = "screen-press"
+hook = "screen_mouse_button_pressed_pre"
+hook_version = 1
+kind = "HEAD"
+helper = "scr_press.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "screen", ty = "&horizon_client::mod_api::NativeScreenView<'_>", value = "screen" },
+  { name = "button", ty = "i32", value = "button" },
+  { name = "modifiers", ty = "u32", value = "modifiers" },
+  { name = "canceled", ty = "&mut bool", value = "&mut *canceled" },
+]
+
+[[injection]]
+id = "screen-release"
+hook = "screen_mouse_button_released_pre"
+hook_version = 1
+kind = "HEAD"
+helper = "scr_release.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "screen", ty = "&horizon_client::mod_api::NativeScreenView<'_>", value = "screen" },
+  { name = "button", ty = "i32", value = "button" },
+  { name = "canceled", ty = "&mut bool", value = "&mut *canceled" },
+]
+
+[[injection]]
+id = "screen-drag"
+hook = "screen_mouse_dragged_pre"
+hook_version = 1
+kind = "HEAD"
+helper = "scr_drag.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "screen", ty = "&horizon_client::mod_api::NativeScreenView<'_>", value = "screen" },
+  { name = "canceled", ty = "&mut bool", value = "&mut *canceled" },
+]
+
+[[injection]]
+id = "screen-wheel"
+hook = "screen_mouse_scrolled_pre"
+hook_version = 1
+kind = "HEAD"
+helper = "scr_wheel.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "screen", ty = "&horizon_client::mod_api::NativeScreenView<'_>", value = "screen" },
+  { name = "scroll", ty = "[f64; 2]", value = "scroll" },
+  { name = "canceled", ty = "&mut bool", value = "&mut *canceled" },
+]
+
+[[injection]]
+id = "screen-key-pressed"
+hook = "screen_key_pressed_pre"
+hook_version = 1
+kind = "HEAD"
+helper = "scr_key_pressed.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "screen", ty = "&horizon_client::mod_api::NativeScreenView<'_>", value = "screen" },
+  { name = "key", ty = "&str", value = "key" },
+  { name = "modifiers", ty = "u32", value = "modifiers" },
+  { name = "canceled", ty = "&mut bool", value = "&mut *canceled" },
+]
+
+[[injection]]
+id = "screen-key-released"
+hook = "screen_key_released_pre"
+hook_version = 1
+kind = "HEAD"
+helper = "scr_key_released.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "screen", ty = "&horizon_client::mod_api::NativeScreenView<'_>", value = "screen" },
+  { name = "canceled", ty = "&mut bool", value = "&mut *canceled" },
+]
+
+[[injection]]
+id = "screen-char"
+hook = "screen_char_typed_pre"
+hook_version = 1
+kind = "HEAD"
+helper = "scr_char.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "screen", ty = "&horizon_client::mod_api::NativeScreenView<'_>", value = "screen" },
+  { name = "c", ty = "char", value = "c" },
+  { name = "canceled", ty = "&mut bool", value = "&mut *canceled" },
+]
