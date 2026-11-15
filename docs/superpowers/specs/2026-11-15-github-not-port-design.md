@@ -1,6 +1,6 @@
 # GitHub positioning: standalone, inspired by NEA
 
-Date: 2026-11-15  
+Date: 2026-11-15
 Status: approved
 
 ## Intent
