@@ -1,6 +1,6 @@
 [mod]
 id = "bodymotion"
-version = "0.2.80"
+version = "0.2.81"
 priority = 100
 
 [[module]]
@@ -222,6 +222,33 @@ bindings = [
   { name = "stack", ty = "&crate::items::ItemStack", value = "stack" },
   { name = "display", ty = "horizon_assets::item_model::DisplayContext", value = "display" },
   { name = "owner", ty = "Option<&horizon_assets::item_model::OwnerState>", value = "owner" },
+]
+
+# First person: a loaded crossbow in the off hand shows like one in the main
+# hand, with the main hand's item hidden and the crossbow turned aside.
+[[injection]]
+id = "fp-offhand-crossbow-hands"
+kind = "RETURN"
+target = "horizon_client::game::hand::Game<'_>::hands_to_render"
+helper = "fp_hands_bm.rs"
+bindings = [
+  { name = "value", ty = "[bool; 2]", value = "$value" },
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+]
+
+[[injection]]
+id = "fp-offhand-crossbow-pose"
+kind = "HEAD"
+target = "horizon_client::game::native_hooks::Game<'_>::native_render_hand_pose"
+helper = "fp_crossbow_bm.rs"
+bindings = [
+  { name = "hand", ty = "horizon_client::first_person::Hand", value = "hand" },
+  { name = "stack", ty = "Option<&ItemStack>", value = "stack" },
+  { name = "swing", ty = "f32", value = "swing" },
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "x", ty = "&mut f32", value = "&mut *x" },
+  { name = "z", ty = "&mut f32", value = "&mut *z" },
+  { name = "yaw", ty = "&mut f32", value = "&mut *yaw" },
 ]
 
 # The config screen over the Options screen, while it is open on the mod's page.
