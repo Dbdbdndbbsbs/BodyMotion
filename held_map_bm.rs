@@ -21,29 +21,35 @@ fn bm_held_map(
     }
     // While a bow or crossbow is charging, both arms aim the weapon, so the
     // 3D map is skipped; `map_hide_bm` keeps the flat icon hidden too. The
-    // same goes for a charged crossbow held up in either hand.
-    let charged_crossbow = |hand: Option<&str>| {
-        hand == Some("minecraft:crossbow") && mob.extra.charged
-    };
+    // same goes for a loaded crossbow held up in either hand. The game tracks
+    // the loaded crossbow in the main hand only, so the local off hand reads
+    // its stack here; a remote off hand has no stack data.
+    let local_player = game
+        .player_model
+        .as_ref()
+        .is_some_and(|p| p.id == mob.id && p.kind.id == mob.kind.id);
     let using_hand: Option<&str> = if mob.extra.using_off_hand {
         mob.extra.off_hand.as_deref()
     } else {
         mob.extra.main_hand.as_deref()
     };
+    let main_charged =
+        mob.extra.main_hand.as_deref() == Some("minecraft:crossbow") && mob.extra.charged;
+    let off_charged = local_player
+        && game.offhand.as_ref().is_some_and(|s| {
+            &*s.item == "minecraft:crossbow"
+                && s.data().is_some_and(|d| !d.charged.is_empty())
+        });
     let two_handed = (mob.extra.using_item > 0
         && matches!(
             using_hand,
             Some("minecraft:bow") | Some("minecraft:crossbow")
         ))
-        || charged_crossbow(mob.extra.main_hand.as_deref())
-        || charged_crossbow(mob.extra.off_hand.as_deref());
+        || main_charged
+        || off_charged;
     if two_handed {
         return;
     }
-    let local_player = game
-        .player_model
-        .as_ref()
-        .is_some_and(|p| p.id == mob.id && p.kind.id == mob.kind.id);
     let data = game.res.mob_data();
     for (item, off_hand) in [
         (&mob.extra.main_hand, false),

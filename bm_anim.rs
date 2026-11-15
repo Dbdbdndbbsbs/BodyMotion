@@ -176,6 +176,12 @@ thread_local! {
     static LOCAL_FALL_SPEED: Cell<f32> = const { Cell::new(0.0) };
     /// The tweak-elytra speed scale, from the local player's velocity.
     static LOCAL_K: Cell<f32> = const { Cell::new(1.0) };
+    /// The local player's off-hand crossbow, from the frame hook: loaded, and
+    /// its charge time. The game tracks both for the main hand only
+    /// (`Perspective::update_model`), and a remote player's off-hand stack data
+    /// is not synced, so remote players keep the unloaded defaults.
+    static OFF_CHARGED: Cell<bool> = const { Cell::new(false) };
+    static OFF_CHARGE_MAX: Cell<f32> = const { Cell::new(25.0) };
     /// The social poses' raycast, the frame hook's (the local player crouches
     /// with another player (hug) or a wolf/cat (pet) in view).
     static LOCAL_HUG: Cell<bool> = const { Cell::new(false) };
@@ -265,6 +271,11 @@ pub fn set_local_falling(on: bool, speed: f32) {
 pub fn set_local_k(k: f32) {
     LOCAL_K.with(|c| c.set(k));
 }
+/// The local player's off-hand crossbow: loaded, and its charge time (ticks).
+pub fn set_offhand_crossbow(charged: bool, max: f32) {
+    OFF_CHARGED.with(|c| c.set(charged));
+    OFF_CHARGE_MAX.with(|c| c.set(max));
+}
 pub fn set_hug(on: bool) {
     LOCAL_HUG.with(|c| c.set(on));
 }
@@ -310,6 +321,8 @@ pub fn reset_animation_state() {
     HOLDING_LIST.with(|c| c.borrow_mut().clear());
     ROT_TICK.with(|c| c.borrow_mut().clear());
     LOCAL_TICK.with(|c| c.set(u32::MAX));
+    OFF_CHARGED.with(|c| c.set(false));
+    OFF_CHARGE_MAX.with(|c| c.set(25.0));
     SMOOTH.with(|c| c.borrow_mut().clear());
 }
 /// the original mod's BoatAnimation: the boat the local player rides, and each paddle's
@@ -413,6 +426,15 @@ pub struct BmState {
     pub crossbow_charge: bool,
     pub crossbow_hold: bool,
     pub using_bow: bool,
+    /// The main hand holds the two-handed pose: a bow or crossbow being used,
+    /// or a loaded crossbow held up. The off-hand pose must not override it.
+    pub main_two_handed: bool,
+    /// The off hand holds a bow or a crossbow, and the crossbow is loaded.
+    pub off_bow: bool,
+    pub off_crossbow: bool,
+    pub off_charged: bool,
+    /// The off-hand crossbow's charge time (ticks); 25 when unknown.
+    pub off_charge_max: f32,
     pub hug: bool,
     pub pet: bool,
     pub horse: bool,
@@ -473,6 +495,11 @@ impl BmState {
         crossbow_charge: false,
         crossbow_hold: false,
         using_bow: false,
+        main_two_handed: false,
+        off_bow: false,
+        off_crossbow: false,
+        off_charged: false,
+        off_charge_max: 25.0,
         hug: false,
         pet: false,
         horse: false,
@@ -568,18 +595,33 @@ impl BmState {
         } else {
             m.extra.main_hand.as_deref()
         };
+        let using_main = m.extra.using_item > 0 && !m.extra.using_off_hand;
+        let using_off = m.extra.using_item > 0 && m.extra.using_off_hand;
         let using_bow = m.extra.using_item > 0 && using_hand == Some("minecraft:bow");
         let using_crossbow = m.extra.using_item > 0 && using_hand == Some("minecraft:crossbow");
-        let charged_crossbow = |hand: Option<&str>| {
-            hand == Some("minecraft:crossbow")
-                && m.extra.charged
-                && s.swing == 0.0
+        // The game tracks the loaded crossbow in the main hand only
+        // (`Perspective::update_model`); the frame hook feeds the local
+        // player's off hand, and a remote off hand has no stack data.
+        let off_bow = m.extra.off_hand.as_deref() == Some("minecraft:bow");
+        let off_crossbow = m.extra.off_hand.as_deref() == Some("minecraft:crossbow");
+        let off_charged = off_crossbow && is_local && OFF_CHARGED.with(|c| c.get());
+        let main_charged =
+            m.extra.main_hand.as_deref() == Some("minecraft:crossbow") && m.extra.charged;
+        let charged_using = if m.extra.using_off_hand {
+            off_charged
+        } else {
+            m.extra.charged
         };
-        let crossbow_charge = using_crossbow && !m.extra.charged;
-        let crossbow_hold = charged_crossbow(m.extra.main_hand.as_deref())
-            || charged_crossbow(m.extra.off_hand.as_deref());
-        // VanillaTwoHandedAnimation: the vanilla bow/crossbow poses.
-        let two_handed = using_bow || crossbow_charge || crossbow_hold;
+        let crossbow_charge = using_crossbow && !charged_using;
+        let crossbow_hold = (main_charged || off_charged) && s.swing == 0.0;
+        // VanillaTwoHandedAnimation: the vanilla bow/crossbow poses. The game
+        // poses the main hand only; `apply_offhand_two_handed` mirrors the
+        // pose onto the off hand.
+        let main_two_handed =
+            (using_main && (using_bow || using_crossbow)) || (main_charged && s.swing == 0.0);
+        let off_two_handed =
+            (using_off && (using_bow || using_crossbow)) || (off_charged && s.swing == 0.0);
+        let two_handed = main_two_handed || off_two_handed;
         // VanillaSingleHandedAnimation: spyglass, trident, spear.
         let single_handed = spear
             || (m.extra.using_item > 0
@@ -703,6 +745,15 @@ impl BmState {
             crossbow_charge,
             crossbow_hold,
             using_bow,
+            main_two_handed,
+            off_bow,
+            off_crossbow,
+            off_charged,
+            off_charge_max: if is_local {
+                OFF_CHARGE_MAX.with(|c| c.get())
+            } else {
+                25.0
+            },
             hug,
             pet,
             horse,
@@ -794,6 +845,7 @@ pub fn apply_all(p: &mut Poses) {
         apply_pet(p, &st);
         apply_eat_drink(p, &st);
     }
+    apply_offhand_two_handed(p, &st);
     apply_clamp_crossbow(p, &st);
     apply_custom_bow(p, &st);
     apply_item_swap(p, &st);
@@ -1142,6 +1194,35 @@ fn apply_elytra(p: &mut Poses, st: &BmState) {
     p.zrot("left_leg", -move_out);
     p.xrot("right_leg", (movement * 0.666_2).mcos() * 0.7 / k);
     p.zrot("right_leg", move_out);
+}
+
+/// The vanilla two-handed poses for a weapon in the off hand: the game gives
+/// only the main hand the bow/crossbow pose (`AvatarRenderer.getArmPose`
+/// leaves the off hand at `ArmPose::Item`), so the off hand holds the weapon
+/// down. Mirror the game's formulas with the off hand as the holding hand; the
+/// main hand's two-handed pose wins, as in vanilla.
+fn apply_offhand_two_handed(p: &mut Poses, st: &BmState) {
+    if !st.is_player || st.main_two_handed {
+        return;
+    }
+    let hx = p.get("head")[3];
+    let hy = p.get("head")[4];
+    if st.using_off_hand && st.using_item > 0 && st.off_crossbow {
+        super::crossbow_charge(p, st.off_charge_max, st.using_item as f32, false);
+    } else if st.using_off_hand && st.using_item > 0 && st.off_bow {
+        // `ArmPose::Bow`, the game's own formulas.
+        p.yrot("right_arm", -0.1 + hy);
+        p.yrot("left_arm", 0.1 + hy + 0.4);
+        p.xrot("right_arm", -std::f32::consts::PI / 2.0 + hx);
+        p.xrot("left_arm", -std::f32::consts::PI / 2.0 + hx);
+    } else if st.off_charged && st.swing == 0.0 {
+        super::crossbow_hold(p, hx, hy, false);
+    } else {
+        return;
+    }
+    // `humanoid` bobs the arms after posing them; the mod runs after it.
+    super::bob(p, "right_arm", st.age, 1.0);
+    super::bob(p, "left_arm", st.age, -1.0);
 }
 
 /// the original mod's ClampCrossbowAnimations (priority 3200): the crossbow poses' arms

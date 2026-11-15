@@ -80,6 +80,7 @@ fn bm_frame(game: &mut crate::game::Game<'_>) {
         anim::set_local_dying(false);
         anim::set_local_falling(false, 0.0);
         anim::set_local_k(1.0);
+        anim::set_offhand_crossbow(false, 25.0);
         anim::set_hug(false);
         anim::set_pet(false);
         anim::set_horse_riders(Default::default());
@@ -171,6 +172,18 @@ fn bm_frame(game: &mut crate::game::Game<'_>) {
     anim::set_local_spin(p.auto_spin_attack_ticks > 0);
     anim::set_local_dying(p.health.dead_or_dying());
     anim::set_local_k((p.velocity.length_squared() as f32 / 0.2).powi(3).max(1.0));
+
+    // The game tracks the loaded crossbow and its charge time in the main hand
+    // only (`Perspective::update_model`); the mod mirrors the off-hand pose and
+    // hides the main-hand map from these.
+    let (off_charged, off_charge_max) = game.offhand.as_ref().map_or((false, 25.0), |s| {
+        (
+            &*s.item == "minecraft:crossbow"
+                && s.data().is_some_and(|d| !d.charged.is_empty()),
+            crate::game::Game::<'_>::charge_ticks(s).max(1) as f32,
+        )
+    });
+    anim::set_offhand_crossbow(off_charged, off_charge_max);
 
     // the original mod's FallingAnimation: free fall, not gliding, climbing, flying (creative
     // or spectator) or swimming; the speed is |velocity|²/11 and the trigger
