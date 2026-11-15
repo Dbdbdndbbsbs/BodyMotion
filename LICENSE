@@ -2,11 +2,11 @@ Body Motion (for Horizon)
 
 Copyright (c) 2026 romaeboj
 
-This mod is a from-scratch Horizon port of the animations it offers, written
-in Rust for the Horizon engine. Its design follows Not Enough Animations
-(https://github.com/tr7zw/NotEnoughAnimations, Copyright (c) tr7zw, 2021) —
-a concept credit, not a derivative: no code, translation files or other
-assets from that mod are included. Everything here is licensed as below.
+Body Motion is an independently developed native mod for Horizon, written
+in Rust. Its animation concept was inspired by Not Enough Animations
+(https://github.com/tr7zw/NotEnoughAnimations, Copyright (c) tr7zw, 2021).
+No code, translation files or other assets from that mod are included.
+Everything here is licensed as below.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software (in source or binary form) and associated documentation files

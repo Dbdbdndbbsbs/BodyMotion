@@ -2,7 +2,7 @@
 
 Full-body player animations for [Horizon](https://playhorizon.dev), shipped as a native mod: maps held in both hands, eating and drinking, ladder climbing and crawling, boat rowing, horse riding, petting, hugging, falling, burning, freezing and more — all animated in third person.
 
-Body Motion is a Horizon port of [Not Enough Animations](https://modrinth.com/mod/not-enough-animations) by tr7zw. The mod, its settings screen, its translations and every line of code are written from scratch in Rust by **romaeboj**.
+Body Motion is a standalone native mod for Horizon, independently developed in Rust by **romaeboj**. It adds its own player animations and settings, and was inspired by [Not Enough Animations](https://modrinth.com/mod/not-enough-animations) by tr7zw. Its code, settings screen and translations were created for Body Motion.
 
 ## Features
 
@@ -35,12 +35,6 @@ horizon-launcher native-build <path to this repo> --version <Horizon build id> -
 
 ## Credits and license
 
-- Based on **Not Enough Animations** © [tr7zw](https://github.com/tr7zw) — the original concept: <https://github.com/tr7zw/NotEnoughAnimations>
-- Code, Horizon port, settings screen and translations: © 2026 **romaeboj**, released under the MIT-style license in [LICENSE](LICENSE).
+- Inspired by **Not Enough Animations** © [tr7zw](https://github.com/tr7zw) — original concept: <https://github.com/tr7zw/NotEnoughAnimations>
+- Body Motion code, Horizon implementation, settings screen and translations: © 2026 **romaeboj**, released under the MIT-style license in [LICENSE](LICENSE).
 - Not affiliated with Mojang or Microsoft.
-
-## Русский
-
-**Body Motion** — порт мода *Not Enough Animations* (автор tr7zw) для Horizon: анимации тела от третьего лица — карты в руках, еда, лестницы, гребля, езда на лошади, объятия, падение и многое другое, плюс экран настроек с поиском и подсказками на 14 языках.
-
-Установка: скачайте `BodyMotion-<версия>.hnmod` из Releases и положите в папку `horizon-native-mods` вашего инстанса, затем перезапустите игру. Настройки: **Опции → Моды → Body Motion → Настроить**.
