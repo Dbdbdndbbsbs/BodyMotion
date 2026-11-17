@@ -203,7 +203,7 @@ thread_local! {
     static HORSE_STAND: Cell<f32> = const { Cell::new(0.0) };
     /// Remote players' FallingAnimation data, per mob id: the last y and the
     /// falling speed (`FallingData`).
-    static FALL_MAP: RefCell<crate::fast_hash::FxHashMap<u32, (f64, f32)>> =
+    static FALL_MAP: RefCell<crate::fast_hash::FxHashMap<u32, (f64, f32, u32)>> =
         RefCell::new(crate::fast_hash::FxHashMap::default());
     /// The Hold Up Items list (the Hold Up Items tab), from the frame hook.
     static HOLDING_LIST: RefCell<Vec<String>> = const { RefCell::new(Vec::new()) };
@@ -228,6 +228,12 @@ struct SmoothEntry {
     render: [[f32; 3]; 4],
     partial: f32,
     started: bool,
+    /// The last tick and partial a render happened at, and how many renders in
+    /// a row they have not changed: the smoothing interpolation is stuck then
+    /// (a paused world, an open inventory, a frozen server tick), and the
+    /// limbs are re-seeded to the pose they should be in instead.
+    last_age: f32,
+    stall: u32,
 }
 pub fn set_bm(s: BmSettings) {
     BM.with(|c| c.set(s));
@@ -448,6 +454,7 @@ pub struct BmState {
     pub main_empty: bool,
     pub rotation_target: bool,
 }
+
 impl BmState {
     pub const NONE: Self = Self {
         id: u32::MAX,
@@ -641,14 +648,20 @@ impl BmState {
             {
                 FALL_MAP.with(|c| {
                     let map = &mut *c.borrow_mut();
-                    let data = map.entry(m.id).or_insert((m.position.y as f64, 0.0));
-                    if data.0 == m.position.y as f64 {
+                    let data = map.entry(m.id).or_insert((m.position.y as f64, 0.0, m.age));
+                    if data.2 == m.age {
                         // Rerender in the same tick: keep the speed.
                         fall_speed = data.1;
                     } else {
-                        fall_speed = (data.0 - m.position.y as f64) as f32 / 3.5;
+                        // The drop since the last sample, per tick: a sample can
+                        // span several ticks on a laggy server, and the original's
+                        // 3.5 factor and 0.5 threshold assume per-tick deltas.
+                        let dropped = (data.0 - m.position.y as f64) as f32
+                            / m.age.saturating_sub(data.2).max(1) as f32;
                         data.0 = m.position.y as f64;
-                        data.1 = fall_speed;
+                        data.1 = dropped / 3.5;
+                        data.2 = m.age;
+                        fall_speed = data.1;
                     }
                     falling = fall_speed > 0.5 / 3.5;
                 });
@@ -802,9 +815,9 @@ pub fn apply_all(p: &mut Poses) {
     if !st.is_player {
         return;
     }
-    // The 3600-priority guards first: dying, Riptide's spin and the vanilla
-    // swim pose claim the whole model and block every other animation.
-    if st.dying || st.spin_attack || st.swim_in_water {
+    // The 3600-priority guards first: dying and Riptide's spin claim the whole
+    // model and block every other animation.
+    if st.dying || st.spin_attack {
         return;
     }
     // `maxNormalAngle` / `maxBlockingAngle`: vanilla's head limit relative to
@@ -823,14 +836,16 @@ pub fn apply_all(p: &mut Poses) {
     // as the original's priority order does (Map/Hold Up 300, Crawling 350,
     // Falling/Burning/Freezing 400, Naruto 500, Ladder 1000, Boat/Horse 1500,
     // Hug/Pet 2100, Eat/Drink 2500, Elytra 3000, guards 3100, Clamp/Custom
-    // Bow 3200, Item Swap 3500).
+    // Bow 3200, Item Swap 3500). Eat/Drink is applied after Elytra and Item
+    // Swap on purpose: the using arm must still reach the mouth while gliding,
+    // swimming or trading items.
     // The vanilla poses' guards (3100) block everything below 3100.
     let guard = st.blocking || st.two_handed || st.single_handed;
     if st.fall_flying {
         // ElytraAnimation (3000) claims the model during the glide; the
         // tweak re-poses the limbs (or does nothing when off).
         apply_elytra(p, &st);
-    } else if !guard {
+    } else if !guard && !st.swim_in_water {
         apply_map_holding(p, &st);
         apply_hold_up(p, &st);
         apply_crawling(p, &st);
@@ -843,12 +858,14 @@ pub fn apply_all(p: &mut Poses) {
         apply_horse(p, &st);
         apply_hug(p, &st);
         apply_pet(p, &st);
-        apply_eat_drink(p, &st);
     }
     apply_offhand_two_handed(p, &st);
     apply_clamp_crossbow(p, &st);
     apply_custom_bow(p, &st);
     apply_item_swap(p, &st);
+    // Eat/Drink wins the using arm over the glide, the swim pose and a fresh
+    // item swap; special items and sleep still keep their own poses.
+    apply_eat_drink(p, &st);
     apply_sleep(p, &st);
     apply_smoothing(p, &st);
 }
@@ -1539,11 +1556,20 @@ fn apply_smoothing(p: &mut Poses, st: &BmState) {
             render: [[0.0; 3]; 4],
             partial: st.partial,
             started: false,
+            last_age: st.age,
+            stall: 0,
         });
         let first = !e.started;
         // A partial tick that went backwards (or the first sight of the mob)
         // starts a new tick.
         let new_tick = first || st.partial < e.partial;
+        // The interpolation is stuck when renders keep coming with the same
+        // tick and partial (a paused world, an open inventory, a frozen server
+        // tick): re-seed the limbs to the pose they should be in, so the model
+        // follows the game instead of holding its last smoothed pose.
+        let stalled = e.last_age == st.age && e.partial == st.partial;
+        e.stall = if stalled { e.stall.saturating_add(1) } else { 0 };
+        e.last_age = st.age;
         e.partial = st.partial;
         e.started = true;
         let limbs = [
@@ -1558,20 +1584,26 @@ fn apply_smoothing(p: &mut Poses, st: &BmState) {
             }
             let cur = p.get(name);
             let cur = [cur[3], cur[4], cur[5]];
-            if new_tick {
-                // `last[3] = last[0] = last[6]`, then the target moves toward
-                // the new pose by `speed`.
-                for k in 0..3 {
-                    e.prev[i][k] = if first { cur[k] } else { e.render[i][k] };
-                    e.target[i][k] = if first {
-                        cur[k]
-                    } else {
-                        rotlerp_rad(speed, cur[k], e.prev[i][k])
-                    };
+            if e.stall >= 2 {
+                e.prev[i] = cur;
+                e.target[i] = cur;
+                e.render[i] = cur;
+            } else {
+                if new_tick {
+                    // `last[3] = last[0] = last[6]`, then the target moves toward
+                    // the new pose by `speed`.
+                    for k in 0..3 {
+                        e.prev[i][k] = if first { cur[k] } else { e.render[i][k] };
+                        e.target[i][k] = if first {
+                            cur[k]
+                        } else {
+                            rotlerp_rad(speed, cur[k], e.prev[i][k])
+                        };
+                    }
                 }
-            }
-            for k in 0..3 {
-                e.render[i][k] = rotlerp_rad(delta, e.prev[i][k], e.target[i][k]);
+                for k in 0..3 {
+                    e.render[i][k] = rotlerp_rad(delta, e.prev[i][k], e.target[i][k]);
+                }
             }
             p.xrot(name, e.render[i][0]);
             p.yrot(name, e.render[i][1]);
