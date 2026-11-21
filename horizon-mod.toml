@@ -1,6 +1,6 @@
 id = "bodymotion"
 name = "Body Motion"
-version = "0.2.82"
+version = "0.3.0"
 description = "Smoother and more expressive third-person animations: eating, drinking, climbing, riding, maps, lanterns and more."
 authors = ["romaeboj"]
 # A native mod: Rust in src/, compiled by the launcher against the game build [native] pins, beside data/ and assets/.
