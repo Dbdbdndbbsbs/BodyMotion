@@ -1,5 +1,0 @@
-native-data/
-native-crates/
-target/
-*.hmod
-*.hnmod

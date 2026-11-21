@@ -1,0 +1,341 @@
+id = "bodymotion"
+name = "Body Motion"
+version = "0.2.82"
+description = "Smoother and more expressive third-person animations: eating, drinking, climbing, riding, maps, lanterns and more."
+authors = ["romaeboj"]
+# A native mod: Rust in src/, compiled by the launcher against the game build [native] pins, beside data/ and assets/.
+api = "0.2"
+side = "client"
+capabilities = ["registries"]
+
+[native]
+game = "26.3"
+horizon = "f037744a79f9982c47876f49c5a3067279f88706"
+mixins = "e59da9094f0c2fdda6c627fe9eff22dec6a906f0"
+
+# Support modules: mirrors of game files that hold code the mixin helpers share.
+# `runtime` and `glue` are plain modules of the mod's own crate (src/runtime.rs, src/glue.rs).
+
+
+
+
+[[native.module]]
+id = "maps_bm"
+file = "crates/horizon-client/src/game.rs"
+name = "native_bm_maps"
+source = "src/maps_bm.rs"
+
+
+[[native.module]]
+id = "anim"
+file = "crates/horizon-client/src/game.rs"
+name = "native_bm_anim"
+source = "src/bm_anim.rs"
+visibility = "pub"
+
+[[native.module]]
+id = "pet"
+file = "crates/horizon-client/src/game.rs"
+name = "native_bm_pet"
+source = "src/pet.rs"
+visibility = "pub"
+
+[[native.module]]
+id = "lantern"
+file = "crates/horizon-client/src/game.rs"
+name = "native_bm_lantern"
+source = "src/lantern_glue.rs"
+visibility = "pub"
+
+[[native.module]]
+id = "render_bm"
+file = "crates/horizon-client/src/game.rs"
+name = "native_bm_render"
+source = "src/render_bm.rs"
+visibility = "pub"
+# Private game methods the helpers need (invisible from the helper's module).
+[[native.bridge]]
+id = "stack_in"
+kind = "INVOKE"
+target = "horizon_client::game::shield::Game<'_>::stack_in"
+
+[[native.bridge]]
+id = "map_texture"
+kind = "INVOKE"
+target = "horizon_client::game::maps::Game<'_>::map_texture"
+
+# The animation heads over the vanilla model setup and visibility.
+
+
+# The maps' textures warm up before the entity geometry pass draws them.
+[[native.mixin]]
+id = "warm"
+target = "horizon_client::game::Game<'_>::entity_geometry"
+kind = "HEAD"
+helper = "src/mixins/warm_bm.rs"
+bindings = [
+  { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+]
+
+# Third-person held items: maps, off-hand hiding, beds and lanterns.
+[[native.mixin]]
+id = "hero-map"
+target = "horizon_client::game::mob_blocks::Game<'_>::held_item_geometry"
+kind = "HEAD"
+helper = "src/mixins/held_map_bm.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "mob", ty = "&horizon_client_lib::mobs::Mob", value = "mob" },
+  { name = "camera", ty = "glam::DVec3", value = "camera" },
+  { name = "alpha", ty = "f64", value = "alpha" },
+  { name = "light", ty = "u32", value = "light" },
+  { name = "out", ty = "&mut Vec<crate::mesher::Vertex>", value = "out" },
+]
+
+[[native.mixin]]
+id = "update-offhand"
+target = "horizon_client::game::mob_blocks::Game<'_>::held_item_geometry"
+kind = "HEAD"
+helper = "src/mixins/offhand_hiding_bm.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "mob", ty = "&horizon_client_lib::mobs::Mob", value = "mob" },
+]
+
+[[native.mixin]]
+id = "bed-items"
+target = "horizon_client::game::mob_blocks::Game<'_>::held_item_geometry"
+kind = "HEAD"
+cancellable = true
+helper = "src/mixins/bed_items_bm.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "mob", ty = "&horizon_client_lib::mobs::Mob", value = "mob" },
+]
+
+[[native.mixin]]
+id = "hero-lantern"
+target = "horizon_client::game::mob_blocks::Game<'_>::held_item_geometry"
+kind = "HEAD"
+helper = "src/mixins/lantern_bm.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "mob", ty = "&horizon_client_lib::mobs::Mob", value = "mob" },
+  { name = "camera", ty = "glam::DVec3", value = "camera" },
+  { name = "alpha", ty = "f64", value = "alpha" },
+  { name = "light", ty = "u32", value = "light" },
+  { name = "out", ty = "&mut Vec<crate::mesher::Vertex>", value = "out" },
+]
+
+# The item-model resolver returns an empty state for the 3D-drawn items.
+[[native.mixin]]
+id = "hide-lantern"
+target = "horizon_client::game::item_draw::Game<'_>::resolve_item_in_hand"
+kind = "HEAD"
+cancellable = true
+helper = "src/mixins/lantern_hide_bm.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "stack", ty = "&crate::items::ItemStack", value = "stack" },
+  { name = "display", ty = "horizon_assets::item_model::DisplayContext", value = "display" },
+  { name = "owner", ty = "Option<&horizon_assets::item_model::OwnerState>", value = "owner" },
+]
+
+[[native.mixin]]
+id = "hide-map"
+target = "horizon_client::game::item_draw::Game<'_>::resolve_item_in_hand"
+kind = "HEAD"
+cancellable = true
+helper = "src/mixins/map_hide_bm.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "stack", ty = "&crate::items::ItemStack", value = "stack" },
+  { name = "display", ty = "horizon_assets::item_model::DisplayContext", value = "display" },
+  { name = "owner", ty = "Option<&horizon_assets::item_model::OwnerState>", value = "owner" },
+]
+
+[[native.mixin]]
+id = "hide-offhand"
+target = "horizon_client::game::item_draw::Game<'_>::resolve_item_in_hand"
+kind = "HEAD"
+cancellable = true
+helper = "src/mixins/hide_offhand_bm.rs"
+bindings = [
+  { name = "stack", ty = "&crate::items::ItemStack", value = "stack" },
+  { name = "display", ty = "horizon_assets::item_model::DisplayContext", value = "display" },
+  { name = "owner", ty = "Option<&horizon_assets::item_model::OwnerState>", value = "owner" },
+]
+
+# First person: a loaded crossbow in the off hand hides the main hand's item.
+[[native.mixin]]
+id = "fp-offhand-crossbow-hands"
+target = "horizon_client::game::hand::Game<'_>::hands_to_render"
+kind = "RETURN"
+helper = "src/mixins/fp_hands_bm.rs"
+bindings = [
+  { name = "value", ty = "[bool; 2]", value = "$value" },
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+]
+
+# The off hand's loaded crossbow's pose (the API's item stack is opaque, so the
+# charged check needs the game's own stack data).
+[[native.mixin]]
+id = "fp-offhand-crossbow-pose"
+target = "horizon_client::game::native_hooks::render_hand::Game<'_>::native_render_hand"
+kind = "HEAD"
+helper = "src/mixins/fp_crossbow_bm.rs"
+bindings = [
+  { name = "render", ty = "&mut mod_api::HandRender<'_>", value = "render" },
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+]
+
+# Once a frame: refresh the animation state from the settings cache and the
+# local player (the mod's `render_frame_pre` hook refreshed the cache first).
+[[native.mixin]]
+id = "frame"
+target = "horizon_client::game::native_hooks::render_frame_pre::Game<'_>::native_render_frame_pre"
+kind = "HEAD"
+helper = "src/mixins/bm_frame.rs"
+bindings = [
+  { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+]
+
+# The settings screen: the GUI, its sprites, and the screen glue, in the game.rs
+# mirror (they draw with the game's HudBatch and read the glue cache).
+[[native.module]]
+id = "sprites"
+file = "crates/horizon-client/src/game.rs"
+name = "native_bm_sprites"
+source = "src/sprites.rs"
+
+[[native.module]]
+id = "gui"
+file = "crates/horizon-client/src/game.rs"
+name = "native_bm_gui"
+source = "src/gui.rs"
+
+[[native.module]]
+id = "screen"
+file = "crates/horizon-client/src/game.rs"
+name = "native_bm_screen"
+source = "src/screen.rs"
+
+[[native.mixin]]
+id = "screen-render"
+target = "horizon_client::game::native_hooks::base::Game<'_>::native_screen_render_post"
+kind = "HEAD"
+helper = "src/mixins/scr_render.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "batch", ty = "&mut horizon_client::hud::HudBatch", value = "draw" },
+  { name = "screen", ty = "&mod_api::ScreenView<'_>", value = "screen" },
+]
+
+[[native.mixin]]
+id = "screen-press"
+target = "horizon_client::game::native_hooks::base::Game<'_>::native_screen_mouse_button_pressed_pre"
+kind = "HEAD"
+helper = "src/mixins/scr_press.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "screen", ty = "&mod_api::ScreenView<'_>", value = "screen" },
+  { name = "button", ty = "i32", value = "button" },
+  { name = "modifiers", ty = "u32", value = "modifiers" },
+  { name = "canceled", ty = "&mut bool", value = "canceled" },
+]
+
+[[native.mixin]]
+id = "screen-release"
+target = "horizon_client::game::native_hooks::base::Game<'_>::native_screen_mouse_button_released_pre"
+kind = "HEAD"
+helper = "src/mixins/scr_release.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "screen", ty = "&mod_api::ScreenView<'_>", value = "screen" },
+  { name = "button", ty = "i32", value = "button" },
+  { name = "canceled", ty = "&mut bool", value = "canceled" },
+]
+
+[[native.mixin]]
+id = "screen-drag"
+target = "horizon_client::game::native_hooks::base::Game<'_>::native_screen_mouse_dragged_pre"
+kind = "HEAD"
+helper = "src/mixins/scr_drag.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "screen", ty = "&mod_api::ScreenView<'_>", value = "screen" },
+  { name = "canceled", ty = "&mut bool", value = "canceled" },
+]
+
+[[native.mixin]]
+id = "screen-wheel"
+target = "horizon_client::game::native_hooks::base::Game<'_>::native_screen_mouse_scrolled_pre"
+kind = "HEAD"
+helper = "src/mixins/scr_wheel.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "screen", ty = "&mod_api::ScreenView<'_>", value = "screen" },
+  { name = "scroll", ty = "[f64; 2]", value = "scroll" },
+  { name = "canceled", ty = "&mut bool", value = "canceled" },
+]
+
+[[native.mixin]]
+id = "screen-key-pressed"
+target = "horizon_client::game::native_hooks::base::Game<'_>::native_screen_key_pressed_pre"
+kind = "HEAD"
+helper = "src/mixins/scr_key_pressed.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "screen", ty = "&mod_api::ScreenView<'_>", value = "screen" },
+  { name = "key", ty = "&str", value = "key" },
+  { name = "modifiers", ty = "u32", value = "modifiers" },
+  { name = "canceled", ty = "&mut bool", value = "canceled" },
+]
+
+[[native.mixin]]
+id = "screen-key-released"
+target = "horizon_client::game::native_hooks::base::Game<'_>::native_screen_key_released_pre"
+kind = "HEAD"
+helper = "src/mixins/scr_key_released.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "screen", ty = "&mod_api::ScreenView<'_>", value = "screen" },
+  { name = "canceled", ty = "&mut bool", value = "canceled" },
+]
+
+[[native.mixin]]
+id = "screen-char"
+target = "horizon_client::game::native_hooks::base::Game<'_>::native_screen_char_typed_pre"
+kind = "HEAD"
+helper = "src/mixins/scr_char.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "screen", ty = "&mod_api::ScreenView<'_>", value = "screen" },
+  { name = "c", ty = "char", value = "c" },
+  { name = "canceled", ty = "&mut bool", value = "canceled" },
+]
+
+# The Options screen stays hidden under the config screen while this mod's page
+# in Options > Mods is open: the registered rows (the "old" settings) are never
+# drawn, only the custom screen is.
+[[native.mixin]]
+id = "screen-cover"
+target = "horizon_client::game::options::Game<'_>::draw_options"
+kind = "HEAD"
+cancellable = true
+helper = "src/mixins/scr_cover.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+]
+
+# The game lists native mods without an icon; this row gets its icon after the
+# native list is built (so the Mods screen shows it like a content mod's).
+[[native.mixin]]
+id = "native-icon"
+target = "horizon_client::game::native_hooks::Game<'_>::list_native_mods"
+kind = "RETURN"
+helper = "src/mixins/native_icon_bm.rs"
+bindings = [
+  { name = "value", ty = "()", value = "$value" },
+  { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+]

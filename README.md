@@ -1,40 +1,38 @@
 # Body Motion
 
-Full-body player animations for [Horizon](https://playhorizon.dev), shipped as a native mod: maps held in both hands, eating and drinking, ladder climbing and crawling, boat rowing, horse riding, petting, hugging, falling, burning, freezing and more — all animated in third person.
+Smoother and more expressive third-person animations for [Horizon](https://playhorizon.dev): eating, drinking, climbing, riding, maps, lanterns and more.
 
-Body Motion is a standalone native mod for Horizon, independently developed in Rust by **romaeboj**. It adds its own player animations and settings, and was inspired by [Not Enough Animations](https://modrinth.com/mod/not-enough-animations) by tr7zw. Its code, settings screen and translations were created for Body Motion.
+A standalone reimplementation inspired by the Not Enough Animations mod, written as a **native mod** on Horizon's current native mod API. Not affiliated with the original mod.
 
-## Features
+## Requirements
 
-- **World map rendering** — held maps render in the world, in one or both hands.
-- **Animations** — ladders (with snap-to-ladder), crawling, eating/drinking, boat rowing, horse riding (plus a separate leg-pose option), item swapping, petting wolves and cats, freezing, burning, elytra tweaks, bed items and frozen sleep arms, offhand hiding while drawing a bow, hugging, Naruto running, and a falling animation that kicks in past 4 blocks.
-- **Rotation locking** — locks the body to the head's rotation: None / Fixed / Smooth, first-person only, apply to every player, and separate normal/blocking angles.
-- **Animation smoothing** — smooths arms and legs, with an amount slider and a leg-only toggle.
-- **Hold Up Items** — players hold up what they inspect: configurable / all / no / inverted item modes, a camera target, and offset sliders.
-- **Lanterns** — lanterns swing while held.
+- **Horizon nightly-2026-11-21-f037744** (commit `f037744a79f9982c47876f49c5a3067279f88706`), Minecraft game `26.3`.
+- Native mod support enabled in the launcher (Settings → Allow native mods). Native mods are compiled on your computer; they run with your user rights, not in a sandbox.
+- The mod is built against a specific game commit. Newer Nightlies may rebuild it automatically (Update), older versions are not guaranteed to work.
 
-The settings screen has three tabs, a search field, delayed tooltips and is fully translated into 14 languages: English, Russian, Ukrainian, German (de/AT/CH), French, Polish, Portuguese (BR/PT), Swedish, Turkish, Chinese (simplified/traditional).
+## What's inside
+
+- `src/` — the mod source (Rust).
+- `assets/` — language files.
+- `icon.png` — mod icon.
+- `Cargo.toml`, `horizon-mod.toml` — the native mod manifest (pins the game commit and mixin revision).
 
 ## Install
 
-1. Download `BodyMotion-<version>.hnmod` from [Releases](../../releases).
-2. Put it into your instance's `horizon-native-mods` folder (for example `AppData\Roaming\horizon\instances\<instance>\horizon-native-mods\`).
-3. Restart the game. Native mods are compiled for your game build, so the launcher rebuilds the mod when Horizon updates.
+1. Download `bodymotion.hmod` from the latest release.
+2. Place it in the instance's mods folder (or install through the launcher's mod browser / `mods add-github`).
+3. In the launcher, press **Build** for the mod. The launcher compiles it for your installed version.
+4. Launch the game. Settings live in **Options → Mods → Body Motion** (custom screen).
 
-Configure it in game: **Options → Mods → Body Motion → Configure**.
+## Changelog highlights
 
-## Build from source
+- Ported to the new native mod API (`api 0.2`) — no legacy `.hnmod`/mixin-patch files.
+- Custom settings screen instead of registry settings rows.
+- Map, lantern and item pose fixes (including filled maps in both hands).
+- Petting animation follows the animal; smooth aim.
+- Eating/drinking pose applies only to real food and drink — a spear in use keeps its vanilla pose.
+- Fixed icon (`icon.png`) shown in the mods list.
 
-Clone the repo and compile it into your game build with the Horizon launcher:
+## License
 
-```
-horizon-launcher native-build <path to this repo> --version <Horizon build id> --trust-native-code
-```
-
-`--version` is the Horizon version/commit the mod compiles against (shown in the launcher), and `--trust-native-code` confirms the mod is allowed to hook into the game. The build is incremental; the first one takes a few minutes.
-
-## Credits and license
-
-- Inspired by **Not Enough Animations** © [tr7zw](https://github.com/tr7zw) — original concept: <https://github.com/tr7zw/NotEnoughAnimations>
-- Body Motion code, Horizon implementation, settings screen and translations: © 2026 **romaeboj**, released under the MIT-style license in [LICENSE](LICENSE).
-- Not affiliated with Mojang or Microsoft.
+MIT — see `LICENSE`. The NOTICE file keeps the original authors' credits.
