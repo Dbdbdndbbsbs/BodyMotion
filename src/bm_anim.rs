@@ -1450,12 +1450,12 @@ fn apply_custom_bow(p: &mut Poses, st: &BmState) {
     let yaw = wrap_deg(st.head_yaw);
     let main_z = p.get(main)[5];
     let off_z = p.get(off)[5];
-    p.yrot(main, invert * (-0.15 + pitch).clamp(-1.0, 0.55));
-    p.xrot(main, (-1.4 + invert * yaw * 0.85).clamp(-1.9, 0.05));
-    p.zrot(main, main_z + invert * 1.25);
-    p.yrot(off, invert * (0.15 + pitch * 0.8).clamp(-0.9, 0.65));
-    p.xrot(off, (-1.4 + invert * yaw * 0.85 + 0.7).clamp(-0.95, -0.55));
-    p.zrot(off, off_z + invert * 1.25);
+    p.yrot(main, invert * (-0.18 + pitch * 0.9).clamp(-1.05, 0.7));
+    p.xrot(main, (-1.45 + invert * yaw * 0.8).clamp(-2.1, 0.05));
+    p.zrot(main, main_z + invert * 1.3);
+    p.yrot(off, invert * (0.05 + pitch * 0.85).clamp(-0.85, 0.75));
+    p.xrot(off, (-1.45 + invert * yaw * 0.8 + 0.65).clamp(-0.9, -0.5));
+    p.zrot(off, off_z + invert * 1.3);
 }
 
 /// Crawling pose: hands and knees pull the body along; each limb advances in
