@@ -71,8 +71,58 @@ fn settings_path() -> Option<ConfigPath> {
     ConfigPath::new(SETTINGS_FILE).ok()
 }
 
+/// The earlier names of each setting, for migrating saved files.
+fn legacy_names(key: &str) -> &'static [&'static str] {
+    match key {
+        "bodymotion.master" => &["bodymotion.enabled", "bm.enabled"],
+        "bodymotion.consume" => &["bodymotion.eatDrink", "bm.eatDrink"],
+        "bodymotion.climb" => &["bodymotion.ladder", "bm.ladder"],
+        "bodymotion.align_ladder" => &["bodymotion.rotateToLadder", "bm.rotateToLadder"],
+        "bodymotion.climb_swing" => &["bodymotion.ladderAnimationAmplifier", "bm.ladderAnimationAmplifier"],
+        "bodymotion.climb_reach" => &["bodymotion.ladderAnimationArmHeight", "bm.ladderAnimationArmHeight"],
+        "bodymotion.climb_pace" => &["bodymotion.ladderAnimationArmSpeed", "bm.ladderAnimationArmSpeed"],
+        "bodymotion.row" => &["bodymotion.boat", "bm.boat"],
+        "bodymotion.handoff" => &["bodymotion.itemSwap", "bm.itemSwap"],
+        "bodymotion.alight" => &["bodymotion.burning", "bm.burning"],
+        "bodymotion.shiver" => &["bodymotion.freezing", "bm.freezing"],
+        "bodymotion.belly" => &["bodymotion.crawling", "bm.crawling"],
+        "bodymotion.rest" => &["bodymotion.sleep", "bm.sleep"],
+        "bodymotion.map3d" => &["bodymotion.inWorldMapRendering", "bm.inWorldMapRendering"],
+        "bodymotion.bow_offhand" => &["bodymotion.offhandHiding", "bm.offhandHiding"],
+        "bodymotion.hold_list" => &["bodymotion.holdingItems", "bm.holdingItems"],
+        "bodymotion.lamp_list" => &["bodymotion.lanternItems", "bm.lanternItems"],
+        "bodymotion.sway_lamps" => &["bodymotion.animateLanterns", "bm.animateLanterns"],
+        "bodymotion.embrace" => &["bodymotion.huggingAnimation", "bm.huggingAnimation"],
+        "bodymotion.stroke" => &["bodymotion.petAnimation", "bm.petAnimation"],
+        "bodymotion.dash" => &["bodymotion.narutoRunning", "bm.narutoRunning"],
+        "bodymotion.tumble" => &["bodymotion.fallingAnimation", "bm.fallingAnimation"],
+        "bodymotion.ride_horse" => &["bodymotion.enableHorseAnimation", "bm.enableHorseAnimation"],
+        "bodymotion.horse_stance" => &["bodymotion.enableHorseLegAnimation", "bm.enableHorseLegAnimation"],
+        "bodymotion.body_lock" => &["bodymotion.enableRotationLocking", "bm.enableRotationLocking"],
+        "bodymotion.body_lock_mode" => &["bodymotion.rotationLock", "bm.rotationLock"],
+        "bodymotion.lock_first_person" => &["bodymotion.limitRotationLockToFP", "bm.limitRotationLockToFP"],
+        "bodymotion.lock_remote" => &["bodymotion.applyRotationLockToEveryone", "bm.applyRotationLockToEveryone"],
+        "bodymotion.head_limit" => &["bodymotion.maxNormalAngle", "bm.maxNormalAngle"],
+        "bodymotion.block_head_limit" => &["bodymotion.maxBlockingAngle", "bm.maxBlockingAngle"],
+        "bodymotion.bow_pose" => &["bodymotion.bowAnimation", "bm.bowAnimation"],
+        "bodymotion.bow_lock" => &["bodymotion.customBowRotationLock", "bm.customBowRotationLock"],
+        "bodymotion.bow_clamp" => &["bodymotion.clampCrossbowAnimations", "bm.clampCrossbowAnimations"],
+        "bodymotion.glide_tweak" => &["bodymotion.tweakElytraAnimation", "bm.tweakElytraAnimation"],
+        "bodymotion.smooth" => &["bodymotion.enableAnimationSmoothing", "bm.enableAnimationSmoothing"],
+        "bodymotion.smooth_legs" => &["bodymotion.disableLegSmoothing", "bm.disableLegSmoothing"],
+        "bodymotion.smooth_speed" => &["bodymotion.smoothingSpeed", "bm.smoothingSpeed"],
+        "bodymotion.hold_mode" => &["bodymotion.holdUpItemsMode", "bm.holdUpItemsMode"],
+        "bodymotion.hold_target" => &["bodymotion.holdUpTarget", "bm.holdUpTarget"],
+        "bodymotion.hold_offset_item" => &["bodymotion.holdUpItemOffset", "bm.holdUpItemOffset"],
+        "bodymotion.hold_offset_camera" => &["bodymotion.holdUpCameraOffset", "bm.holdUpCameraOffset"],
+        "bodymotion.hold_self_only" => &["bodymotion.holdUpOnlySelf", "bm.holdUpOnlySelf"],
+        "bodymotion.bed_hands" => &["bodymotion.dontHoldItemsInBed", "bm.dontHoldItemsInBed"],
+        _ => &[],
+    }
+}
+
 /// Read one saved setting from the mod's config file. Keys recorded under the
-/// earlier `bm.*` schema are still honoured.
+/// earlier `bodymotion.*` or `bm.*` schemas are still honoured.
 fn read_settings(host: &dyn ClientHost, key: &str) -> Option<String> {
     let path = settings_path()?;
     let bytes = host.config_files().read(&path).ok()?;
@@ -80,8 +130,12 @@ fn read_settings(host: &dyn ClientHost, key: &str) -> Option<String> {
     if let Some(s) = v.get(key).and_then(|x| x.as_str()) {
         return Some(s.to_owned());
     }
-    let legacy = key.replacen("bodymotion.", "bm.", 1);
-    v.get(&legacy).and_then(|x| x.as_str()).map(str::to_owned)
+    for old in legacy_names(key) {
+        if let Some(s) = v.get(old).and_then(|x| x.as_str()) {
+            return Some(s.to_owned());
+        }
+    }
+    None
 }
 
 /// Write the saved settings to the mod's config file.

@@ -648,8 +648,8 @@ impl BmState {
         let single_handed = spear
             || (m.extra.using_item > 0
                 && matches!(using_hand, Some("minecraft:spyglass") | Some("minecraft:trident")));
-        // FallingAnimation: the local player's trigger and speed come from the
-        // frame hook; remote players use the mod's y-distance heuristic.
+        // Falling: the local player's trigger and speed come from the frame
+        // hook; remote players estimate the speed from the per-tick drop.
         let mut falling = false;
         let mut fall_speed = 0.0;
         if is_player {
@@ -668,17 +668,16 @@ impl BmState {
                         // Rerender in the same tick: keep the speed.
                         fall_speed = data.1;
                     } else {
-                        // The drop since the last sample, per tick: a sample can
-                        // span several ticks on a laggy server, and the mod's
-                        // 3.5 factor and 0.5 threshold assume per-tick deltas.
+                        // The drop since the last sample, per tick; a sample can
+                        // span several ticks on a laggy server.
                         let dropped = (data.0 - m.position.y as f64) as f32
                             / m.age.saturating_sub(data.2).max(1) as f32;
                         data.0 = m.position.y as f64;
-                        data.1 = dropped / 3.5;
+                        data.1 = (dropped * 0.14).clamp(0.0, 1.0);
                         data.2 = m.age;
                         fall_speed = data.1;
                     }
-                    falling = fall_speed > 0.5 / 3.5;
+                    falling = fall_speed > 0.08;
                 });
             }
         }
@@ -1265,11 +1264,8 @@ thread_local! {
     static PET_AIM: RefCell<[f32; 2]> = RefCell::new([0.0, -1.2]);
 }
 
-/// the mod's PetAnimation (priority 2100): crouching to a wolf or cat in view, the
-/// main hand strokes it. The heart event is not portable (no entity-event
-/// API). With a target (the local player), the arm reaches for the animal's
-/// center, so it follows it as it moves; without one (a remote player) the
-/// stroking arm keeps its idle wave.
+/// Petting pose: the main hand reaches toward the animal's chest and keeps a
+/// soft stroking sway; the arm eases to the target instead of snapping.
 fn apply_pet(p: &mut Poses, st: &BmState) {
     if !bm_on(bm().pet) || !st.pet {
         return;
@@ -1277,41 +1273,31 @@ fn apply_pet(p: &mut Poses, st: &BmState) {
     let right = !st.main_arm_left;
     let name = if right { "right_arm" } else { "left_arm" };
     if let Some([x, y, z]) = st.pet_target {
-        // `pet_target` is the target in the model's space (x right, y up, z
-        // away from the view). `aim_angles` turns it into the arm's yaw and
-        // pitch; the aim is smoothed so a moving pet does not jerk the hand.
         let [yaw_target, pitch_target] =
             crate::game::native_bm_pet::aim_angles([x, y, z]);
         let [yaw, pitch] = PET_AIM.with(|c| {
             let mut c = c.borrow_mut();
-            let k = 0.15;
+            let k = 0.12;
             let yaw = c[0] + (yaw_target - c[0]) * k;
             let pitch = c[1] + (pitch_target - c[1]) * k;
             *c = [yaw, pitch];
             [yaw, pitch]
         });
         p.yrot(name, yaw);
-        p.xrot(name, -1.2 - pitch * 0.8);
+        p.xrot(name, -1.05 - pitch * 0.7);
     } else {
         PET_AIM.with(|c| *c.borrow_mut() = [0.0, -1.2]);
-        // `EntityUtil.getXRot` is the head pitch in degrees.
-        let t = -1.0 * (st.pitch - 90.0) / 180.0;
-        p.xrot(name, -(1.0 + t));
-        p.yrot(name, if right { -0.6 } else { 0.6 });
+        // A gentle forward lift tied to the camera pitch (degrees).
+        let t = ((st.pitch + 90.0) / 180.0).clamp(0.0, 1.0);
+        p.xrot(name, -(0.9 + t * 0.6));
+        p.yrot(name, if right { -0.45 } else { 0.45 });
     }
-    let wave = ((std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map_or(0, |d| d.as_millis())
-        % 20000) as f32
-        / 60.0)
-        .msin()
-        * 0.2;
-    p.zrot(name, if right { 0.3 + wave } else { -(0.3 + wave) });
+    let wave = (st.age * 0.7).msin() * 0.15 + (st.age * 1.3).msin() * 0.05;
+    p.zrot(name, if right { 0.25 + wave } else { -(0.25 + wave) });
 }
 
-/// the mod's ElytraAnimation (priority 3000): gliding spreads the limbs, the idle
-/// wobble shrinking with the speed. `fly_k` is the speed scale from the
-/// velocity.
+/// Gliding pose: the limbs lie back like wing surfaces, with a slow rocking
+/// that flattens as speed grows.
 fn apply_elytra(p: &mut Poses, st: &BmState) {
     if !st.fall_flying {
         return;
@@ -1320,23 +1306,18 @@ fn apply_elytra(p: &mut Poses, st: &BmState) {
         // The vanilla guard: the pose claims the model, nothing to add.
         return;
     }
-    let k = st.fly_k;
-    let move_out = (0.150_796_4 / k).clamp(0.1, 0.25);
-    let movement = st.age;
-    p.xrot("left_arm", (movement * 0.666_2).mcos() * 0.5 / k);
-    p.zrot("left_arm", -move_out);
-    p.xrot(
-        "right_arm",
-        (movement * 0.666_2 + std::f32::consts::PI).mcos() * 0.5 / k,
-    );
-    p.zrot("right_arm", move_out);
-    p.xrot(
-        "left_leg",
-        (movement * 0.666_2 + std::f32::consts::PI).mcos() * 0.7 / k,
-    );
-    p.zrot("left_leg", -move_out);
-    p.xrot("right_leg", (movement * 0.666_2).mcos() * 0.7 / k);
-    p.zrot("right_leg", move_out);
+    let k = st.fly_k.max(0.001);
+    let out = (0.16 / k).clamp(0.08, 0.22);
+    let phase = st.age * 0.55;
+    let swing = 0.45 / k;
+    p.xrot("left_arm", phase.mcos() * swing);
+    p.zrot("left_arm", -out);
+    p.xrot("right_arm", (phase + std::f32::consts::PI).mcos() * swing);
+    p.zrot("right_arm", out);
+    p.xrot("left_leg", (phase + std::f32::consts::PI).mcos() * 0.65 / k);
+    p.zrot("left_leg", -out * 0.8);
+    p.xrot("right_leg", phase.mcos() * 0.65 / k);
+    p.zrot("right_leg", out * 0.8);
 }
 
 /// `AnimationUtils.animateCrossbowHold` (private in the game's `mobs::anim`).
@@ -1449,7 +1430,8 @@ fn apply_custom_bow(p: &mut Poses, st: &BmState) {
     p.zrot(off, off_z + invert * 1.5);
 }
 
-/// the mod's CrawlingAnimation (priority 350): the swimming pose on land crawls.
+/// Crawling pose: hands and knees pull the body along; each limb advances in
+/// turn, mirrored left/right, driven by the crawl distance.
 fn apply_crawling(p: &mut Poses, st: &BmState) {
     if !bm_on(bm().crawling) || st.swim_in_water {
         return;
@@ -1458,79 +1440,28 @@ fn apply_crawling(p: &mut Poses, st: &BmState) {
     if amount <= 0.0 {
         return;
     }
-    let speed_mul = 2.5;
-    let step = (st.pos * speed_mul) % 26.0;
-    let step2 = (step + 13.0) % 26.0;
-    let right = st.swing_right_arm;
-    let m_amount = if right == Some(true) { 0.0 } else { amount };
-    let n_amount = if right == Some(false) { 0.0 } else { amount };
+    let step = st.pos * 2.4;
+    let reach = (step.sin() * 0.9).clamp(-0.9, 0.9);
+    let lift = (step.cos() * 0.5).clamp(-0.5, 0.5);
     let lerp = |a: f32, from: f32, to: f32| from + a * (to - from);
-    let rotlerp = |a: f32, from: f32, to: f32| rotlerp_rad(a, from, to);
-    let quadratic = |x: f32| -65.0 * x + x * x;
-    let arm = 0.370_796_4;
-    let leg = 0.15;
-    let r = 0.333_333_34;
-    let (rx, ry, rz) = {
-        let a = p.get("right_arm");
-        (a[3], a[4], a[5])
-    };
-    let (tx, ty, tz) = if step < 14.0 {
-        let stroke = 1.870_796_4 * quadratic(step) / quadratic(14.0);
-        (0.0, std::f32::consts::PI, std::f32::consts::PI - stroke)
-    } else if step < 24.0 {
-        let o = (step - 14.0) / 10.0;
-        (
-            -arm * o,
-            std::f32::consts::PI,
-            1.270_796_3 + 1.870_796_4 * o,
-        )
-    } else if step < 26.0 {
-        let pp = (step - 24.0) / 2.0;
-        (
-            -arm + arm * pp,
-            std::f32::consts::PI,
-            std::f32::consts::PI,
-        )
-    } else {
-        (rx, ry, rz)
-    };
-    p.xrot("right_arm", lerp(m_amount, rx, tx));
-    p.yrot("right_arm", lerp(m_amount, ry, ty));
-    p.zrot("right_arm", lerp(m_amount, rz, tz));
-    let (lx, ly, lz) = {
-        let a = p.get("left_arm");
-        (a[3], a[4], a[5])
-    };
-    let (tx, ty, tz) = if step2 < 14.0 {
-        let stroke = 1.870_796_4 * quadratic(step2) / quadratic(14.0);
-        (0.0, std::f32::consts::PI, std::f32::consts::PI + stroke)
-    } else if step2 < 24.0 {
-        let o = (step2 - 14.0) / 10.0;
-        (
-            -arm * o,
-            std::f32::consts::PI,
-            5.012_389 - 1.870_796_4 * o,
-        )
-    } else if step2 < 26.0 {
-        let pp = (step2 - 24.0) / 2.0;
-        (
-            -arm + arm * pp,
-            std::f32::consts::PI,
-            std::f32::consts::PI,
-        )
-    } else {
-        (lx, ly, lz)
-    };
-    p.xrot("left_arm", rotlerp(n_amount, lx, tx));
-    p.yrot("left_arm", rotlerp(n_amount, ly, ty));
-    p.zrot("left_arm", rotlerp(n_amount, lz, tz));
-    let tc = st.pos * speed_mul;
-    let x = p.get("left_leg")[3];
-    p.xrot("left_leg", lerp(amount, x, leg * (tc * r + std::f32::consts::PI).mcos()));
-    p.zrot("left_leg", -0.150_796_4);
-    let x = p.get("right_leg")[3];
-    p.xrot("right_leg", lerp(amount, x, leg * (tc * r).mcos()));
-    p.zrot("right_leg", 0.150_796_4);
+    let m_amount = if st.swing_right_arm == Some(true) { 0.0 } else { amount };
+    let n_amount = if st.swing_right_arm == Some(false) { 0.0 } else { amount };
+    let rrx = { let a = p.get("right_arm"); a[3] };
+    let rrz = { let a = p.get("right_arm"); a[5] };
+    let lrx = { let a = p.get("left_arm"); a[3] };
+    let lrz = { let a = p.get("left_arm"); a[5] };
+    let rlx = { let a = p.get("right_leg"); a[3] };
+    let llx = { let a = p.get("left_leg"); a[3] };
+    // The right arm reaches and sweeps with the right leg trailing; the left
+    // pair mirrors it half a cycle later.
+    p.xrot("right_arm", lerp(m_amount, rrx, -0.6 + reach * 0.8));
+    p.zrot("right_arm", lerp(m_amount, rrz, 0.35));
+    p.xrot("left_arm", lerp(n_amount, lrx, -0.6 - reach * 0.8));
+    p.zrot("left_arm", lerp(n_amount, lrz, -0.35));
+    p.xrot("right_leg", lerp(amount, rlx, -0.35 + lift * 0.7));
+    p.zrot("right_leg", 0.18);
+    p.xrot("left_leg", lerp(amount, llx, -0.35 - lift * 0.7));
+    p.zrot("left_leg", -0.18);
 }
 
 /// Free-fall pose: the arms lift out to the sides and windmill slowly; the
@@ -1584,68 +1515,66 @@ fn apply_naruto(p: &mut Poses, st: &BmState) {
     }
 }
 
-/// the mod's ItemSwapAnimation (priority 3500): the arms cross as the hands trade
-/// their items and unroll over 10 ticks.
+/// Item-swap pose: both hands swing inward across the body and settle back,
+/// over a 14-tick ease.
 fn apply_item_swap(p: &mut Poses, st: &BmState) {
     if !bm_on(bm().item_swap) || st.swap_at <= 0.0 {
         return;
     }
     let elapsed = st.age - st.swap_at;
-    if !(0.0..=10.0).contains(&elapsed) {
+    if !(0.0..=14.0).contains(&elapsed) {
         return;
     }
-    let roll = -1.0 + elapsed / 10.0;
-    p.xrot("right_arm", -0.5);
-    p.yrot("right_arm", 0.2);
+    let u = elapsed / 14.0;
+    // Fast at the start, settling at the end.
+    let roll = (-1.35 * (1.0 - u) * (1.0 - u)).max(-1.35);
+    p.xrot("right_arm", -0.45);
+    p.yrot("right_arm", 0.18);
     p.zrot("right_arm", roll);
-    p.xrot("left_arm", -0.5);
-    p.yrot("left_arm", -0.2);
+    p.xrot("left_arm", -0.45);
+    p.yrot("left_arm", -0.18);
     p.zrot("left_arm", -roll);
 }
 
-/// the mod's BurningAnimation (priority 400): the head wobbles and the free arms
-/// flail.
+/// Burning pose: the head rolls side to side and the free arms flap urgently.
 fn apply_burning(p: &mut Poses, st: &BmState) {
     if !bm_on(bm().burning) || !st.burning {
         return;
     }
-    let t = st.age;
-    p.get("head")[4] += t.msin() * 0.1;
-    let arm_height = t.msin() * 0.1;
+    let t = st.age * 1.4;
+    let head_roll = (t * 1.3).msin() * 0.12;
+    p.get("head")[4] += head_roll;
+    p.get("head")[5] += (t * 1.1).msin() * 0.08;
+    let flap = (t.msin() * 0.5 + (t * 1.7).msin() * 0.3) * 0.35;
     bm_flail(p, st, |p| {
-        p.xrot("right_arm", -2.6 + arm_height);
-        p.yrot("right_arm", -0.2);
-        p.zrot("right_arm", -0.3);
+        p.xrot("right_arm", -2.2 + flap);
+        p.yrot("right_arm", -0.15);
+        p.zrot("right_arm", -0.25 - flap * 0.5);
     }, |p| {
-        p.xrot("left_arm", -2.6 - arm_height);
-        p.yrot("left_arm", 0.2);
-        p.zrot("left_arm", 0.3);
+        p.xrot("left_arm", -2.2 - flap);
+        p.yrot("left_arm", 0.15);
+        p.zrot("left_arm", 0.25 + flap * 0.5);
     });
 }
 
-/// the mod's FreezingAnimation (priority 400): in powder snow without Fire
-/// Resistance, the arms shake with a smooth random-ish roll per frame.
+/// Freezing pose: a high-frequency shiver rolls the arms inward and the head
+/// dips, driven by the model age.
 fn apply_freezing(p: &mut Poses, st: &BmState) {
     if !bm_on(bm().freezing) || !st.freezing {
         return;
     }
-    let now = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map_or(0, |d| d.as_nanos());
-    let t = now as f64 / 1_000_000_000.0;
-    let shake = |f1: f64, f2: f64| {
-        ((t * f1).sin() * 0.5 + (t * f2).sin() * 0.5) as f32 * 0.05
-    };
-    let right_roll = -1.0 + shake(11.0, 17.0);
-    let left_roll = 1.25 + shake(13.0, 19.0);
+    let t = st.age * 2.0;
+    let shake = (t.sin() * 0.5 + (t * 1.6).sin() * 0.5) * 0.06;
+    p.get("head")[4] += shake * 0.5;
+    p.get("head")[5] += (t * 1.2).sin() * 0.05;
     bm_flail(p, st, |p| {
-        p.xrot("right_arm", -0.5);
-        p.yrot("right_arm", 0.2);
-        p.zrot("right_arm", right_roll);
+        p.xrot("right_arm", -0.35);
+        p.yrot("right_arm", 0.15);
+        p.zrot("right_arm", -0.9 + shake);
     }, |p| {
-        p.xrot("left_arm", -0.6);
-        p.yrot("left_arm", -0.2);
-        p.zrot("left_arm", left_roll);
+        p.xrot("left_arm", -0.45);
+        p.yrot("left_arm", -0.15);
+        p.zrot("left_arm", 1.15 + shake);
     });
 }
 

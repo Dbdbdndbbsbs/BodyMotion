@@ -185,16 +185,20 @@ fn bm_frame(game: &mut crate::game::Game<'_>) {
     });
     anim::set_offhand_crossbow(off_charged, off_charge_max);
 
-    // the mod's FallingAnimation: free fall, not gliding, climbing, flying (creative
-    // or spectator) or swimming; the speed is |velocity|²/11 and the trigger
-    // needs more than 4 blocks of fall distance (our threshold: the mod     // used 3).
+    // Falling: free fall, not gliding, climbing, flying (creative or
+    // spectator) or swimming. The spread scales with the fall's vertical
+    // speed; the trigger needs more than 4 blocks of fall distance.
     let falling_ok = !p.fall_flying
         && !p.ground.on_ground
         && !climbing
         && !p.flying
         && !p.spectator
         && !p.swimming;
-    let fall_speed = if falling_ok { p.velocity.length_squared() as f32 / 11.0 } else { 0.0 };
+    let fall_speed = if falling_ok {
+        (-p.velocity.y) as f32
+    } else {
+        0.0
+    };
     anim::set_local_falling(falling_ok && p.fall_distance > 4.0, fall_speed);
 
     // the mod's HorseAnimation: the mob ids riding a horse-family mount.

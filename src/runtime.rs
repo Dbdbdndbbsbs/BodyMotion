@@ -9,49 +9,49 @@ pub const NAME: &str = "Body Motion";
 pub const VERSION: &str = "0.2.78";
 pub const DESCRIPTION: &str = "Smoother and more expressive third-person animations: eating, drinking, climbing, riding, maps, lanterns and more.";
 
-const KEY_ON: &str = "bodymotion.enabled";
-const KEY_EAT: &str = "bodymotion.eatDrink";
-const KEY_LADDER: &str = "bodymotion.ladder";
-const KEY_ROTATE_LADDER: &str = "bodymotion.rotateToLadder";
-const KEY_LADDER_AMP: &str = "bodymotion.ladderAnimationAmplifier";
-const KEY_LADDER_HEIGHT: &str = "bodymotion.ladderAnimationArmHeight";
-const KEY_LADDER_SPEED: &str = "bodymotion.ladderAnimationArmSpeed";
-const KEY_BOAT: &str = "bodymotion.boat";
-const KEY_SWAP: &str = "bodymotion.itemSwap";
-const KEY_BURN: &str = "bodymotion.burning";
-const KEY_FREEZE: &str = "bodymotion.freezing";
-const KEY_CRAWL: &str = "bodymotion.crawling";
-const KEY_SLEEP: &str = "bodymotion.sleep";
-const KEY_MAPS: &str = "bodymotion.inWorldMapRendering";
-const KEY_BOW_FIXES: &str = "bodymotion.offhandHiding";
-const KEY_HOLDING: &str = "bodymotion.holdingItems";
-const KEY_LANTERNS: &str = "bodymotion.lanternItems";
-const KEY_ANIMATE_LANTERNS: &str = "bodymotion.animateLanterns";
-const KEY_HUG: &str = "bodymotion.huggingAnimation";
-const KEY_PET: &str = "bodymotion.petAnimation";
-const KEY_NARUTO: &str = "bodymotion.narutoRunning";
-const KEY_FALLING: &str = "bodymotion.fallingAnimation";
-const KEY_HORSE: &str = "bodymotion.enableHorseAnimation";
-const KEY_HORSE_LEG: &str = "bodymotion.enableHorseLegAnimation";
-const KEY_ROTATION: &str = "bodymotion.enableRotationLocking";
-const KEY_ROTATION_MODE: &str = "bodymotion.rotationLock";
-const KEY_LIMIT_FP: &str = "bodymotion.limitRotationLockToFP";
-const KEY_ROTATION_EVERYONE: &str = "bodymotion.applyRotationLockToEveryone";
-const KEY_MAX_NORMAL: &str = "bodymotion.maxNormalAngle";
-const KEY_MAX_BLOCKING: &str = "bodymotion.maxBlockingAngle";
-const KEY_BOW: &str = "bodymotion.bowAnimation";
-const KEY_CUSTOM_BOW_ROTATION: &str = "bodymotion.customBowRotationLock";
-const KEY_CLAMP: &str = "bodymotion.clampCrossbowAnimations";
-const KEY_ELYTRA: &str = "bodymotion.tweakElytraAnimation";
-const KEY_SMOOTHING: &str = "bodymotion.enableAnimationSmoothing";
-const KEY_DISABLE_LEG_SMOOTHING: &str = "bodymotion.disableLegSmoothing";
-const KEY_SMOOTHING_SPEED: &str = "bodymotion.smoothingSpeed";
-const KEY_HOLD_MODE: &str = "bodymotion.holdUpItemsMode";
-const KEY_HOLD_TARGET: &str = "bodymotion.holdUpTarget";
-const KEY_HOLD_ITEM_OFFSET: &str = "bodymotion.holdUpItemOffset";
-const KEY_HOLD_CAMERA_OFFSET: &str = "bodymotion.holdUpCameraOffset";
-const KEY_HOLD_ONLY_SELF: &str = "bodymotion.holdUpOnlySelf";
-const KEY_DONT_HOLD_BED: &str = "bodymotion.dontHoldItemsInBed";
+const KEY_ON: &str = "bodymotion.master";
+const KEY_EAT: &str = "bodymotion.consume";
+const KEY_LADDER: &str = "bodymotion.climb";
+const KEY_ROTATE_LADDER: &str = "bodymotion.align_ladder";
+const KEY_LADDER_AMP: &str = "bodymotion.climb_swing";
+const KEY_LADDER_HEIGHT: &str = "bodymotion.climb_reach";
+const KEY_LADDER_SPEED: &str = "bodymotion.climb_pace";
+const KEY_BOAT: &str = "bodymotion.row";
+const KEY_SWAP: &str = "bodymotion.handoff";
+const KEY_BURN: &str = "bodymotion.alight";
+const KEY_FREEZE: &str = "bodymotion.shiver";
+const KEY_CRAWL: &str = "bodymotion.belly";
+const KEY_SLEEP: &str = "bodymotion.rest";
+const KEY_MAPS: &str = "bodymotion.map3d";
+const KEY_BOW_FIXES: &str = "bodymotion.bow_offhand";
+const KEY_HOLDING: &str = "bodymotion.hold_list";
+const KEY_LANTERNS: &str = "bodymotion.lamp_list";
+const KEY_ANIMATE_LANTERNS: &str = "bodymotion.sway_lamps";
+const KEY_HUG: &str = "bodymotion.embrace";
+const KEY_PET: &str = "bodymotion.stroke";
+const KEY_NARUTO: &str = "bodymotion.dash";
+const KEY_FALLING: &str = "bodymotion.tumble";
+const KEY_HORSE: &str = "bodymotion.ride_horse";
+const KEY_HORSE_LEG: &str = "bodymotion.horse_stance";
+const KEY_ROTATION: &str = "bodymotion.body_lock";
+const KEY_ROTATION_MODE: &str = "bodymotion.body_lock_mode";
+const KEY_LIMIT_FP: &str = "bodymotion.lock_first_person";
+const KEY_ROTATION_EVERYONE: &str = "bodymotion.lock_remote";
+const KEY_MAX_NORMAL: &str = "bodymotion.head_limit";
+const KEY_MAX_BLOCKING: &str = "bodymotion.block_head_limit";
+const KEY_BOW: &str = "bodymotion.bow_pose";
+const KEY_CUSTOM_BOW_ROTATION: &str = "bodymotion.bow_lock";
+const KEY_CLAMP: &str = "bodymotion.bow_clamp";
+const KEY_ELYTRA: &str = "bodymotion.glide_tweak";
+const KEY_SMOOTHING: &str = "bodymotion.smooth";
+const KEY_DISABLE_LEG_SMOOTHING: &str = "bodymotion.smooth_legs";
+const KEY_SMOOTHING_SPEED: &str = "bodymotion.smooth_speed";
+const KEY_HOLD_MODE: &str = "bodymotion.hold_mode";
+const KEY_HOLD_TARGET: &str = "bodymotion.hold_target";
+const KEY_HOLD_ITEM_OFFSET: &str = "bodymotion.hold_offset_item";
+const KEY_HOLD_CAMERA_OFFSET: &str = "bodymotion.hold_offset_camera";
+const KEY_HOLD_ONLY_SELF: &str = "bodymotion.hold_self_only";
+const KEY_DONT_HOLD_BED: &str = "bodymotion.bed_hands";
 
 /// Tab identifiers used by the item lists: 0 = Settings, 1 = Hold Up Items,
 /// 2 = Lanterns (the screen's tab order).
@@ -312,9 +312,9 @@ impl Default for Settings {
             eat_drink: true,
             ladder: true,
             rotate_to_ladder: true,
-            ladder_amplifier: 0.35,
-            ladder_arm_height: 1.7,
-            ladder_arm_speed: 2.0,
+            ladder_amplifier: 0.28,
+            ladder_arm_height: 1.55,
+            ladder_arm_speed: 2.2,
             boat: true,
             item_swap: true,
             burning: true,
@@ -342,7 +342,7 @@ impl Default for Settings {
             tweak_elytra: true,
             smoothing: true,
             disable_leg_smoothing: false,
-            smoothing_speed: 0.2,
+            smoothing_speed: 0.25,
             hold_up_mode: HoldUpMode::Config,
             hold_up_target: HoldUpTarget::Camera,
             hold_up_item_offset: 0.0,
