@@ -616,7 +616,7 @@ impl BmState {
         let freezing = if is_local && is_player {
             FREEZING.with(|c| c.get())
         } else {
-            false
+            m.extra.counter > 0
         };
         // The vanilla poses' guards (`isEnabled() == true`, empty apply): they
         // block the lower-priority animations. The local player's dying and
@@ -1546,9 +1546,9 @@ fn apply_naruto(p: &mut Poses, st: &BmState) {
 }
 
 /// Item-swap pose: both hands swing inward across the body and settle back,
-/// over a 14-tick ease.
+/// over a 14-tick ease. While the freezing effect is active the hands stay put.
 fn apply_item_swap(p: &mut Poses, st: &BmState) {
-    if !bm_on(bm().item_swap) || st.swap_at <= 0.0 {
+    if !bm_on(bm().item_swap) || st.swap_at <= 0.0 || st.freezing {
         return;
     }
     let elapsed = st.age - st.swap_at;
@@ -1587,23 +1587,26 @@ fn apply_burning(p: &mut Poses, st: &BmState) {
     });
 }
 
-/// Freezing pose: a mild shiver rolls the arms inward and the head dips.
+/// Freezing pose: the arms fold inward and shake, with a light head shiver.
+/// Hands holding an item keep their pose.
 fn apply_freezing(p: &mut Poses, st: &BmState) {
     if !bm_on(bm().freezing) || !st.freezing {
         return;
     }
     let t = st.age * 2.0;
     let shake = (t.sin() * 0.5 + (t * 1.6).sin() * 0.5) * 0.035;
-    p.get("head")[4] += shake * 0.25;
-    p.get("head")[5] += (t * 1.2).sin() * 0.025;
+    let right_roll = -1.0 + shake;
+    let left_roll = 1.25 + shake;
+    p.get("head")[4] += shake * 0.5;
+    p.get("head")[5] += (t * 1.2).sin() * 0.03;
     bm_flail(p, st, |p| {
-        p.xrot("right_arm", -0.35);
-        p.yrot("right_arm", 0.15);
-        p.zrot("right_arm", -0.75 + shake * 0.6);
+        p.xrot("right_arm", -0.5);
+        p.yrot("right_arm", 0.2);
+        p.zrot("right_arm", right_roll);
     }, |p| {
-        p.xrot("left_arm", -0.45);
-        p.yrot("left_arm", -0.15);
-        p.zrot("left_arm", 0.95 + shake * 0.6);
+        p.xrot("left_arm", -0.6);
+        p.yrot("left_arm", -0.2);
+        p.zrot("left_arm", left_roll);
     });
 }
 
@@ -1621,8 +1624,9 @@ fn apply_sleep(p: &mut Poses, st: &BmState) {
 }
 
 /// Apply `right`/`left` to the free arms; an arm busy with higher-priority
-/// work keeps its pose. The swap flag is only busy while the 10-tick item
-/// swap timer is still running; once it expires the arm is free again.
+/// work keeps its pose. Busy arms: swinging, using an item, the item-swap
+/// timer, climbing, riding, the spear hand, and hands holding an item in a
+/// hold-up pose (map, lantern, item).
 fn bm_flail(
     p: &mut Poses,
     st: &BmState,
@@ -1641,13 +1645,15 @@ fn bm_flail(
     let using_right = st.using_item > 0 && !using_left;
     let swap_busy = st.swap_at > 0.0 && st.age - st.swap_at < 10.0;
     let busy = |left: bool| {
+        let main = left == st.main_arm_left;
         swinging(left)
             || (left && using_left)
             || (!left && using_right)
             || swap_busy
             || st.climbing
             || st.boat
-            || st.spear
+            || (main && (st.spear || st.main_hold))
+            || (!main && st.off_hold)
     };
     if !busy(false) {
         right(p);

@@ -136,8 +136,9 @@ fn bm_frame(game: &mut crate::game::Game<'_>) {
         }
     }
 
-    // the mod's FreezingAnimation: in powder snow and able to freeze.
-    let freezing = p.in_powder_snow && p.can_freeze();
+    // The Freezing effect (from powder snow) is active while the freeze timer
+    // ticks, not only while standing inside the block.
+    let freezing = p.ticks_frozen > 0 && p.can_freeze();
     anim::set_freezing(freezing);
 
     // the mod's BurningAnimation: on fire without fire resistance.
