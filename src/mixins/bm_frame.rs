@@ -78,7 +78,7 @@ fn bm_frame(game: &mut crate::game::Game<'_>) {
         anim::set_local_sprinting(false);
         anim::set_local_spin(false);
         anim::set_local_dying(false);
-        anim::set_local_falling(false, 0.0);
+        anim::set_local_falling(false, 0.0, 0.0);
         anim::set_local_k(1.0);
         anim::set_offhand_crossbow(false, 25.0);
         anim::set_hug(false);
@@ -199,7 +199,11 @@ fn bm_frame(game: &mut crate::game::Game<'_>) {
     } else {
         0.0
     };
-    anim::set_local_falling(falling_ok && p.fall_distance > 4.0, fall_speed);
+    anim::set_local_falling(
+        falling_ok && p.fall_distance > 4.0,
+        fall_speed,
+        game.player_model.as_ref().map_or(0.0, |m| m.age as f32),
+    );
 
     // the mod's HorseAnimation: the mob ids riding a horse-family mount.
     //

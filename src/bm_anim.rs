@@ -166,13 +166,14 @@ thread_local! {
         const { RefCell::new((None, None)) };
     /// The local player's flags the synced extras cannot say (the frame hook
     /// computes them from PlayerMotion): sprinting, Riptide's spin, dying, and
-    /// the FallingAnimation's trigger and speed (`fallDistance > 4` and
-    /// `|velocity|²/11`).
+    /// the FallingAnimation's trigger, vertical speed and fall-start age.
     static LOCAL_SPRINT: Cell<bool> = const { Cell::new(false) };
     static LOCAL_SPIN: Cell<bool> = const { Cell::new(false) };
     static LOCAL_DYING: Cell<bool> = const { Cell::new(false) };
     static LOCAL_FALLING: Cell<bool> = const { Cell::new(false) };
     static LOCAL_FALL_SPEED: Cell<f32> = const { Cell::new(0.0) };
+    static LOCAL_FALL_START: Cell<f32> = const { Cell::new(-1.0) };
+    static LOCAL_FALL_DURATION: Cell<f32> = const { Cell::new(0.0) };
     /// The tweak-elytra speed scale, from the local player's velocity.
     static LOCAL_K: Cell<f32> = const { Cell::new(1.0) };
     /// The local player's off-hand crossbow, from the frame hook: loaded, and
@@ -205,7 +206,7 @@ thread_local! {
     static HORSE_STAND: Cell<f32> = const { Cell::new(0.0) };
     /// Remote players' FallingAnimation data, per mob id: the last y and the
     /// falling speed (the per-mob fall record).
-    static FALL_MAP: RefCell<crate::fast_hash::FxHashMap<u32, (f64, f32, u32)>> =
+    static FALL_MAP: RefCell<crate::fast_hash::FxHashMap<u32, (f64, f32, u32, u32)>> =
         RefCell::new(crate::fast_hash::FxHashMap::default());
     /// The Hold Up Items list (the Hold Up Items tab), from the frame hook.
     static HOLDING_LIST: RefCell<Vec<String>> = const { RefCell::new(Vec::new()) };
@@ -270,11 +271,27 @@ pub fn set_local_spin(on: bool) {
 pub fn set_local_dying(on: bool) {
     LOCAL_DYING.with(|c| c.set(on));
 }
-/// The FallingAnimation's trigger (`fallDistance > 3`) and speed
-/// (`|velocity|²/11`) for the local player.
-pub fn set_local_falling(on: bool, speed: f32) {
+/// The FallingAnimation's trigger (`fallDistance > 4`) and speed for the
+/// local player, plus the age the fall started at (for the buildup).
+pub fn set_local_falling(on: bool, speed: f32, age: f32) {
+    let dur = if on {
+        let start = LOCAL_FALL_START.with(|c| {
+            let s = c.get();
+            if s < 0.0 {
+                c.set(age);
+                age
+            } else {
+                s
+            }
+        });
+        (age - start).max(0.0)
+    } else {
+        LOCAL_FALL_START.with(|c| c.set(-1.0));
+        0.0
+    };
     LOCAL_FALLING.with(|c| c.set(on));
     LOCAL_FALL_SPEED.with(|c| c.set(speed));
+    LOCAL_FALL_DURATION.with(|c| c.set(dur));
 }
 pub fn set_local_k(k: f32) {
     LOCAL_K.with(|c| c.set(k));
@@ -337,6 +354,10 @@ pub fn reset_animation_state() {
     HOLDING_LIST.with(|c| c.borrow_mut().clear());
     ROT_TICK.with(|c| c.borrow_mut().clear());
     LOCAL_TICK.with(|c| c.set(u32::MAX));
+    LOCAL_FALLING.with(|c| c.set(false));
+    LOCAL_FALL_SPEED.with(|c| c.set(0.0));
+    LOCAL_FALL_START.with(|c| c.set(-1.0));
+    LOCAL_FALL_DURATION.with(|c| c.set(0.0));
     OFF_CHARGED.with(|c| c.set(false));
     OFF_CHARGE_MAX.with(|c| c.set(25.0));
     SMOOTH.with(|c| c.borrow_mut().clear());
@@ -464,6 +485,8 @@ pub struct BmState {
     pub horse_standing: bool,
     pub falling: bool,
     pub fall_speed: f32,
+    /// Ticks since the free fall started; the tumble pose builds up with it.
+    pub fall_duration: f32,
     pub fly_k: f32,
     pub main_hold: bool,
     pub off_hold: bool,
@@ -531,6 +554,7 @@ impl BmState {
         horse_standing: false,
         falling: false,
         fall_speed: 0.0,
+        fall_duration: 0.0,
         fly_k: 1.0,
         main_hold: false,
         off_hold: false,
@@ -652,18 +676,20 @@ impl BmState {
         // hook; remote players estimate the speed from the per-tick drop.
         let mut falling = false;
         let mut fall_speed = 0.0;
+        let mut fall_duration = 0.0;
         if is_player {
             if is_local {
                 falling = LOCAL_FALLING.with(|c| c.get());
                 fall_speed = LOCAL_FALL_SPEED.with(|c| c.get());
+                fall_duration = LOCAL_FALL_DURATION.with(|c| c.get());
             } else if !m.extra.fall_flying
                 && !m.on_ground
                 && !climbing
                 && !m.extra.swim.in_water
             {
-                FALL_MAP.with(|c| {
+                fall_duration = FALL_MAP.with(|c| {
                     let map = &mut *c.borrow_mut();
-                    let data = map.entry(m.id).or_insert((m.position.y as f64, 0.0, m.age));
+                    let data = map.entry(m.id).or_insert((m.position.y as f64, 0.0, m.age, m.age));
                     if data.2 == m.age {
                         // Rerender in the same tick: keep the speed.
                         fall_speed = data.1;
@@ -678,6 +704,7 @@ impl BmState {
                         fall_speed = data.1;
                     }
                     falling = fall_speed > 0.08;
+                    m.age.saturating_sub(data.3) as f32
                 });
             }
         }
@@ -809,6 +836,7 @@ impl BmState {
             horse_standing,
             falling,
             fall_speed,
+            fall_duration,
             fly_k,
             main_hold,
             off_hold,
@@ -1464,30 +1492,32 @@ fn apply_crawling(p: &mut Poses, st: &BmState) {
     p.zrot("left_leg", -0.18);
 }
 
-/// Free-fall pose: the arms lift out to the sides and windmill slowly; the
-/// legs trail slightly apart. The spread grows with fall speed.
+/// Free-fall pose: the arms and legs rise out to the sides gradually, and the
+/// windmilling builds up the longer the fall lasts.
 fn apply_falling(p: &mut Poses, st: &BmState) {
     if !bm_on(bm().falling) || !st.falling {
         return;
     }
+    // Buildup over roughly half a second of free fall.
+    let t = (st.fall_duration / 12.0).clamp(0.0, 1.0);
     let speed = st.fall_speed.min(1.0);
-    let spread = (st.fall_speed * 1.6).min(1.0);
+    let spread = (0.4 + 1.2 * speed) * t;
+    let wave = t * (0.6 + 0.6 * speed);
     let phase = st.age * 0.7;
-    let swing = phase.mcos() * speed * 0.8;
-    p.xrot("left_arm", swing);
-    p.zrot("left_arm", -(0.5 + 1.1 * spread));
-    p.xrot("right_arm", (phase + std::f32::consts::PI).mcos() * speed * 0.8);
-    p.zrot("right_arm", 0.5 + 1.1 * spread);
+    p.xrot("left_arm", phase.mcos() * wave);
+    p.zrot("left_arm", -spread);
+    p.xrot("right_arm", (phase + std::f32::consts::PI).mcos() * wave);
+    p.zrot("right_arm", spread);
     p.xrot(
         "left_leg",
-        (phase + std::f32::consts::PI * 0.75).mcos() * speed * 0.9,
+        (phase + std::f32::consts::PI * 0.75).mcos() * wave * 0.8,
     );
-    p.zrot("left_leg", -(0.25 + 0.45 * spread));
+    p.zrot("left_leg", -(0.15 + 0.35 * speed) * t);
     p.xrot(
         "right_leg",
-        (phase + std::f32::consts::PI * 0.25).mcos() * speed * 0.9,
+        (phase + std::f32::consts::PI * 0.25).mcos() * wave * 0.8,
     );
-    p.zrot("right_leg", 0.25 + 0.45 * spread);
+    p.zrot("right_leg", (0.15 + 0.35 * speed) * t);
 }
 
 /// the mod's NarutoRunningAnimation (priority 500): sprinting sweeps both arms
@@ -1536,45 +1566,44 @@ fn apply_item_swap(p: &mut Poses, st: &BmState) {
     p.zrot("left_arm", -roll);
 }
 
-/// Burning pose: the head rolls side to side and the free arms flap urgently.
+/// Burning pose: a slight head roll and calm arm flaps, no flailing.
 fn apply_burning(p: &mut Poses, st: &BmState) {
     if !bm_on(bm().burning) || !st.burning {
         return;
     }
     let t = st.age * 1.4;
-    let head_roll = (t * 1.3).msin() * 0.12;
+    let head_roll = (t * 1.3).msin() * 0.055;
     p.get("head")[4] += head_roll;
-    p.get("head")[5] += (t * 1.1).msin() * 0.08;
-    let flap = (t.msin() * 0.5 + (t * 1.7).msin() * 0.3) * 0.35;
+    p.get("head")[5] += (t * 1.1).msin() * 0.035;
+    let flap = (t.msin() * 0.5 + (t * 1.7).msin() * 0.3) * 0.16;
     bm_flail(p, st, |p| {
         p.xrot("right_arm", -2.2 + flap);
         p.yrot("right_arm", -0.15);
-        p.zrot("right_arm", -0.25 - flap * 0.5);
+        p.zrot("right_arm", -0.25 - flap * 0.3);
     }, |p| {
         p.xrot("left_arm", -2.2 - flap);
         p.yrot("left_arm", 0.15);
-        p.zrot("left_arm", 0.25 + flap * 0.5);
+        p.zrot("left_arm", 0.25 + flap * 0.3);
     });
 }
 
-/// Freezing pose: a high-frequency shiver rolls the arms inward and the head
-/// dips, driven by the model age.
+/// Freezing pose: a mild shiver rolls the arms inward and the head dips.
 fn apply_freezing(p: &mut Poses, st: &BmState) {
     if !bm_on(bm().freezing) || !st.freezing {
         return;
     }
     let t = st.age * 2.0;
-    let shake = (t.sin() * 0.5 + (t * 1.6).sin() * 0.5) * 0.06;
-    p.get("head")[4] += shake * 0.5;
-    p.get("head")[5] += (t * 1.2).sin() * 0.05;
+    let shake = (t.sin() * 0.5 + (t * 1.6).sin() * 0.5) * 0.035;
+    p.get("head")[4] += shake * 0.25;
+    p.get("head")[5] += (t * 1.2).sin() * 0.025;
     bm_flail(p, st, |p| {
         p.xrot("right_arm", -0.35);
         p.yrot("right_arm", 0.15);
-        p.zrot("right_arm", -0.9 + shake);
+        p.zrot("right_arm", -0.75 + shake * 0.6);
     }, |p| {
         p.xrot("left_arm", -0.45);
         p.yrot("left_arm", -0.15);
-        p.zrot("left_arm", 1.15 + shake);
+        p.zrot("left_arm", 0.95 + shake * 0.6);
     });
 }
 
