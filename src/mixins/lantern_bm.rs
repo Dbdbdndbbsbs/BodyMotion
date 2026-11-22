@@ -82,27 +82,27 @@ fn bm_held_lantern(
         let forward = [-yaw.sin(), 0.0, yaw.cos()];
         let off_right = vel[0] * right[0] + vel[2] * right[2];
         let off_forward = vel[0] * forward[0] + vel[2] * forward[2];
-        let sway_roll = (off_right as f32 * 40.0).clamp(-30.0, 30.0);
-        let sway_pitch = (off_forward as f32 * 40.0).clamp(-30.0, 30.0);
+        let sway_roll = (off_right as f32 * 35.0).clamp(-26.0, 26.0);
+        let sway_pitch = (off_forward as f32 * 35.0).clamp(-26.0, 26.0);
         // Scale down, move to the hang point, pivot to the top of the chain.
         // The pendulum pitches and rolls from the world-space offset, so the
         // lantern naturally sags below the hand.
         let m = hand
-            * glam::Mat4::from_scale(glam::Vec3::splat(0.6))
+            * glam::Mat4::from_scale(glam::Vec3::splat(0.63))
             * glam::Mat4::from_translation(glam::Vec3::new(
-                if left { -0.45 } else { -0.5 },
-                0.4,
-                -0.3,
+                if left { -0.38 } else { -0.44 },
+                0.36,
+                -0.26,
             ))
-            * glam::Mat4::from_translation(glam::Vec3::new(0.5, 0.6, 0.5))
-            * glam::Mat4::from_rotation_x(deg(-90.0))
-            * glam::Mat4::from_rotation_x(deg(sway_pitch))
+            * glam::Mat4::from_translation(glam::Vec3::new(0.53, 0.57, 0.53))
+            * glam::Mat4::from_rotation_x(deg(-92.0))
             * glam::Mat4::from_rotation_z(deg(sway_roll))
-            * glam::Mat4::from_translation(glam::Vec3::new(-0.5, -0.6, -0.5));
+            * glam::Mat4::from_rotation_x(deg(sway_pitch * 0.6))
+            * glam::Mat4::from_translation(glam::Vec3::new(-0.53, -0.57, -0.53));
         // The lantern item's block model (`Block.byItem(item).defaultBlockState()`).
         let Some(state) = game.pack.assets.registry.default_state(&item) else {
             continue;
         };
-        game.block_layer_vertices(state, 0, m, 15728880, out);
+        game.block_layer_vertices(state, 0, m, 15790320, out);
     }
 }
