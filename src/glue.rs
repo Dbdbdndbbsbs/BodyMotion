@@ -1,4 +1,4 @@
-//! The mod's game-facing half: a per-frame cache of the parsed settings, the
+//! game-facing half: a per-frame cache of the parsed settings, the
 //! current language, the off-hand hiding flags the first-person/item mixins read,
 //! and the mutators the settings screen uses (the screen runs in the game's
 //! scope, so it cannot call `Host` itself; it marks the cache dirty and
@@ -121,7 +121,7 @@ fn legacy_names(key: &str) -> &'static [&'static str] {
     }
 }
 
-/// Read one saved setting from the mod's config file. Keys recorded under the
+/// Read one saved setting from config file. Keys recorded under the
 /// earlier `bodymotion.*` or `bm.*` schemas are still honoured.
 fn read_settings(host: &dyn ClientHost, key: &str) -> Option<String> {
     let path = settings_path()?;
@@ -138,7 +138,7 @@ fn read_settings(host: &dyn ClientHost, key: &str) -> Option<String> {
     None
 }
 
-/// Write the saved settings to the mod's config file.
+/// Write the saved settings to config file.
 pub fn save_settings(host: &dyn ClientHost, pairs: &[(String, String)]) {
     let Some(path) = settings_path() else {
         return;
@@ -151,7 +151,7 @@ pub fn save_settings(host: &dyn ClientHost, pairs: &[(String, String)]) {
     let _ = host.config_files().write(&path, &bytes);
 }
 
-/// Re-read the settings from the mod's config file (once a frame, from
+/// Re-read the settings from config file (once a frame, from
 /// `render_frame_pre`).
 pub fn update_from_host(host: &dyn ClientHost) {
     let mut s = Settings::load(|key| read_settings(host, key));
@@ -259,7 +259,7 @@ pub fn reset_local() {
 }
 
 /// While the main hand holds a bow or crossbow, the off hand's item hides
-/// (the mod's OffhandHidingAnimation); `hide_offhand_bm` suppresses its
+/// (OffhandHidingAnimation); `hide_offhand_bm` suppresses its
 /// vanilla render for the frame. A shield never hides.
 pub fn set_hide_offhand(v: bool) {
     HIDE_OFFHAND.with(|c| c.set(v));

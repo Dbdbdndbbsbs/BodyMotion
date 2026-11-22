@@ -1,4 +1,4 @@
-// the mod's MapRendering: a filled map held in a player's or mannequin's third-person
+// MapRendering: a filled map held in a player's or mannequin's third-person
 // hand is drawn by `bm_held_map`, so the item model resolver
 // returns an empty state for it and the flat icon is not drawn.
 fn bm_hide_hand_map(

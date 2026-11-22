@@ -1,4 +1,4 @@
-// the mod's OffhandHidingAnimation: while the main hand holds a bow or
+// OffhandHidingAnimation: while the main hand holds a bow or
 // crossbow (not a shield), the off hand's item is hidden; a charged crossbow
 // hides even when idle, a bow only while drawing. Mirrored for a bow in the
 // off hand. A bow paired with a crossbow hides too, as the crossbow's own

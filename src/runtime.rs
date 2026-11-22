@@ -1,5 +1,5 @@
-// The mod's own half: the mod's settings (one per animation, the
-// sliders and the enum choices of the mod's config screen), translated
+// own half: settings (one per animation, the
+// sliders and the enum choices of config screen), translated
 // into every language the mod ships. No game types here; `glue.rs`
 // applies it. This file is also the bundle's Cargo library, so its tests run
 // without a Horizon build.
@@ -58,59 +58,31 @@ const KEY_DONT_HOLD_BED: &str = "bodymotion.bed_hands";
 pub(crate) const ITEM_TAB_HOLDING: usize = 1;
 
 /// Default holding-items list (stored under `holdingItems`).
-pub const DEFAULT_HOLDING: &[&str] = &[    "minecraft:clock",
+pub const DEFAULT_HOLDING: &[&str] = &[
+    "minecraft:clock",
     "minecraft:compass",
-    "minecraft:torch",
-    "minecraft:lantern",
-    "minecraft:soul_torch",
-    "minecraft:soul_lantern",
     "minecraft:recovery_compass",
-    "quad-mstv-mtv:acacia_torch",
-    "quad-mstv-mtv:bamboo_torch",
-    "quad-mstv-mtv:birch_torch",
-    "quad-mstv-mtv:cherry_torch",
-    "quad-mstv-mtv:crimson_torch",
-    "quad-mstv-mtv:dark_oak_torch",
-    "quad-mstv-mtv:pale_oak_torch",
-    "quad-mstv-mtv:jungle_torch",
-    "quad-mstv-mtv:mangrove_torch",
-    "quad-mstv-mtv:spruce_torch",
-    "quad-mstv-mtv:warped_torch",
-    "quad-mstv-mtv:acacia_soul_torch",
-    "quad-mstv-mtv:bamboo_soul_torch",
-    "quad-mstv-mtv:birch_soul_torch",
-    "quad-mstv-mtv:cherry_soul_torch",
-    "quad-mstv-mtv:crimson_soul_torch",
-    "quad-mstv-mtv:dark_oak_soul_torch",
-    "quad-mstv-mtv:pale_oak_soul_torch",
-    "quad-mstv-mtv:jungle_soul_torch",
-    "quad-mstv-mtv:mangrove_soul_torch",
-    "quad-mstv-mtv:spruce_soul_torch",
-    "quad-mstv-mtv:warped_soul_torch",
-    "minecraft:copper_lantern",
-    "minecraft:exposed_copper_lantern",
-    "minecraft:waxed_copper_lantern",
-    "minecraft:waxed_exposed_copper_lantern",
-    "minecraft:waxed_oxidized_copper_lantern",
-    "minecraft:weathered_copper_lantern",
-    "minecraft:waxed_weathered_copper_lantern",
+    "minecraft:torch",
+    "minecraft:soul_torch",
+    "minecraft:lantern",
+    "minecraft:soul_lantern",
 ];
 
 /// Default lantern-items list (stored under `lanternItems`).
 pub const DEFAULT_LANTERNS: &[&str] = &[
-    "minecraft:waxed_copper_lantern",
-    "minecraft:waxed_exposed_copper_lantern",
-    "minecraft:soul_lantern",
-    "minecraft:waxed_oxidized_copper_lantern",
-    "minecraft:exposed_copper_lantern",
     "minecraft:lantern",
-    "minecraft:waxed_weathered_copper_lantern",
-    "minecraft:weathered_copper_lantern",
-    "minecraft:oxidized_copper_lantern",
+    "minecraft:soul_lantern",
     "minecraft:copper_lantern",
+    "minecraft:oxidized_copper_lantern",
+    "minecraft:weathered_copper_lantern",
+    "minecraft:exposed_copper_lantern",
+    "minecraft:waxed_copper_lantern",
+    "minecraft:waxed_oxidized_copper_lantern",
+    "minecraft:waxed_weathered_copper_lantern",
+    "minecraft:waxed_exposed_copper_lantern",
 ];
 
-/// `RotationLock` (the mod's enum).
+/// `RotationLock` (enum).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum RotationLock {
     None,
@@ -118,7 +90,7 @@ pub enum RotationLock {
     Smooth,
 }
 
-/// `HoldUpModes` (the mod's enum).
+/// `HoldUpModes` (enum).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum HoldUpMode {
     Config,
@@ -127,21 +99,21 @@ pub enum HoldUpMode {
     ConfigInverted,
 }
 
-/// `HoldUpTarget` (the mod's enum).
+/// `HoldUpTarget` (enum).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum HoldUpTarget {
     None,
     Camera,
 }
 
-/// `BowAnimation` (the mod's enum).
+/// `BowAnimation` (enum).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum BowAnimation {
     Vanilla,
     CustomV1,
 }
 
-/// One row of the Settings tab, in the mod's order. Headings and the
+/// One row of the Settings tab, in order. Headings and the
 /// disabled rows carry an index into their own label tables.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Row {
@@ -758,7 +730,7 @@ impl Settings {
         list.iter().any(|i| i == id)
     }
 
-    /// The toggles' labels for the mod's page (`text.bm.enable.*`).
+    /// The toggles' labels for page (`text.bodymotion.enable.*`).
     pub fn labels(&self, lang: &str) -> Vec<String> {
         let (on, off) = if russian(lang) {
             ("Вкл.", "Выкл.")
@@ -886,7 +858,7 @@ thread_local! {
     > = std::cell::RefCell::new(std::collections::HashMap::new());
 }
 
-/// The mod's translated string `key` for `lang`: its own file, else en_us.
+/// translated string `key` for `lang`: its own file, else en_us.
 /// Every file we ship is complete, and en_us is the net for languages we
 /// don't ship at all.
 pub fn lang_text(lang: &str, key: &str) -> Option<String> {
@@ -918,57 +890,57 @@ pub fn lang_text(lang: &str, key: &str) -> Option<String> {
 
 /// Each toggle's translation key (the same order as `get`/`click`).
 const TOGGLE_KEYS: [&str; 28] = [
-    "text.bm.enable.inworldmaprendering",
-    "text.bm.enable.ladderanimation",
-    "text.bm.enable.rotatetoladder",
-    "text.bm.enable.crawling",
-    "text.bm.enable.eatdrinkanimation",
-    "text.bm.enable.rowboatanimation",
-    "text.bm.enable.horseanimation",
-    "text.bm.enable.itemSwapAnimation",
-    "text.bm.enable.petAnimation",
-    "text.bm.enable.freezingAnimation",
-    "text.bm.enable.customBowRotationLock",
-    "text.bm.enable.clampCrossbowAnimations",
-    "text.bm.enable.burningAnimation",
-    "text.bm.enable.animationsmoothing",
-    "text.bm.disableLegSmoothing",
-    "text.bm.enable.limitRotationLockToFP",
-    "text.bm.enable.applyRotationLockToEveryone",
-    "text.bm.enable.rotationlocking",
-    "text.bm.animateLanterns",
-    "text.bm.enable.holdUpOnlySelf",
-    "text.bm.enable.tweakElytraAnimation",
-    "text.bm.enable.dontholditemsinbed",
-    "text.bm.enable.freezearmsinbed",
-    "text.bm.enable.offhandhiding",
-    "text.bm.enable.narutoRunning",
-    "text.bm.enable.huggingAnimation",
-    "text.bm.enable.fallingAnimation",
-    "text.bm.enable.enableHorseLegAnimation",
+    "text.bodymotion.enable.inworldmaprendering",
+    "text.bodymotion.enable.ladderanimation",
+    "text.bodymotion.enable.rotatetoladder",
+    "text.bodymotion.enable.crawling",
+    "text.bodymotion.enable.eatdrinkanimation",
+    "text.bodymotion.enable.rowboatanimation",
+    "text.bodymotion.enable.horseanimation",
+    "text.bodymotion.enable.itemSwapAnimation",
+    "text.bodymotion.enable.petAnimation",
+    "text.bodymotion.enable.freezingAnimation",
+    "text.bodymotion.enable.customBowRotationLock",
+    "text.bodymotion.enable.clampCrossbowAnimations",
+    "text.bodymotion.enable.burningAnimation",
+    "text.bodymotion.enable.animationsmoothing",
+    "text.bodymotion.disableLegSmoothing",
+    "text.bodymotion.enable.limitRotationLockToFP",
+    "text.bodymotion.enable.applyRotationLockToEveryone",
+    "text.bodymotion.enable.rotationlocking",
+    "text.bodymotion.animateLanterns",
+    "text.bodymotion.enable.holdUpOnlySelf",
+    "text.bodymotion.enable.tweakElytraAnimation",
+    "text.bodymotion.enable.dontholditemsinbed",
+    "text.bodymotion.enable.freezearmsinbed",
+    "text.bodymotion.enable.offhandhiding",
+    "text.bodymotion.enable.narutoRunning",
+    "text.bodymotion.enable.huggingAnimation",
+    "text.bodymotion.enable.fallingAnimation",
+    "text.bodymotion.enable.enableHorseLegAnimation",
 ];
 
 /// Each slider's translation key (the same order as `slider`).
 const SLIDER_KEYS: [&str; 8] = [
-    "text.bm.ladderAnimationAmplifier",
-    "text.bm.ladderAnimationArmHeight",
-    "text.bm.ladderAnimationArmSpeed",
-    "text.bm.smoothingSpeed",
-    "text.bm.maxNormalAngle",
-    "text.bm.maxBlockingAngle",
-    "text.bm.holdUpItemOffset",
-    "text.bm.holdUpCameraOffset",
+    "text.bodymotion.ladderAnimationAmplifier",
+    "text.bodymotion.ladderAnimationArmHeight",
+    "text.bodymotion.ladderAnimationArmSpeed",
+    "text.bodymotion.smoothingSpeed",
+    "text.bodymotion.maxNormalAngle",
+    "text.bodymotion.maxBlockingAngle",
+    "text.bodymotion.holdUpItemOffset",
+    "text.bodymotion.holdUpCameraOffset",
 ];
 
 /// Each choice's translation key (the same order as `choice`).
 const CHOICE_KEYS: [&str; 4] = [
-    "text.bm.enable.bowAnimation",
-    "text.bm.rotationlock",
-    "text.bm.holdUpItemsMode",
-    "text.bm.holdUpTarget",
+    "text.bodymotion.enable.bowAnimation",
+    "text.bodymotion.rotationlock",
+    "text.bodymotion.holdUpItemsMode",
+    "text.bodymotion.holdUpTarget",
 ];
 
-/// The enum constant name per choice value (the mod's enum variants).
+/// The enum constant name per choice value (enum variants).
 const CHOICE_VALUES: &[&[&str]] = &[
     &["VANILLA", "CUSTOM_V1"],
     &["NONE", "FIXED", "SMOOTH"],
@@ -976,27 +948,27 @@ const CHOICE_VALUES: &[&[&str]] = &[
     &["NONE", "CAMERA"],
 ];
 
-/// The headings' translation keys (`text.bm.line.*`). the mod's
+/// The headings' translation keys (`text.bodymotion.line.*`). the mod's
 /// "Unfinished/Deprecated" heading is gone: its falling animation moved into
 /// Fun, finished.
 const HEADING_KEYS: [&str; 7] = [
-    "text.bm.line.animations",
-    "text.bm.line.smoothing",
-    "text.bm.line.rotation",
-    "text.bm.line.rotationAngle",
-    "text.bm.line.holdup",
-    "text.bm.line.fixes",
-    "text.bm.line.fun",
+    "text.bodymotion.line.animations",
+    "text.bodymotion.line.smoothing",
+    "text.bodymotion.line.rotation",
+    "text.bodymotion.line.rotationAngle",
+    "text.bodymotion.line.holdup",
+    "text.bodymotion.line.fixes",
+    "text.bodymotion.line.fun",
 ];
 
-/// The tabs' translation keys (`text.bm.tab.*`).
+/// The tabs' translation keys (`text.bodymotion.tab.*`).
 const TAB_KEYS: [&str; 3] = [
-    "text.bm.tab.settings",
-    "text.bm.tab.holdup",
-    "text.bm.tab.lantern",
+    "text.bodymotion.tab.settings",
+    "text.bodymotion.tab.holdup",
+    "text.bodymotion.tab.lantern",
 ];
 
-/// The screen's title: the mod's own name, not a translated key.
+/// The screen's title: own name, not a translated key.
 pub fn title(lang: &str) -> &'static str {
     if russian(lang) {
         "Настройки Body Motion"
@@ -1005,19 +977,19 @@ pub fn title(lang: &str) -> &'static str {
     }
 }
 
-/// `text.bm.tab.settings` for the Settings tab.
+/// `text.bodymotion.tab.settings` for the Settings tab.
 pub fn tab_label(lang: &str) -> String {
     tab_label_by_tab(0, lang)
 }
 
-/// `text.bm.tab.settings` for Settings tab, `text.bm.tab.holdup` for Hold Up
-/// Items tab, `text.bm.tab.lantern` for Lanterns tab.
+/// `text.bodymotion.tab.settings` for Settings tab, `text.bodymotion.tab.holdup` for Hold Up
+/// Items tab, `text.bodymotion.tab.lantern` for Lanterns tab.
 pub fn tab_label_by_tab(tab: usize, lang: &str) -> String {
     let key = TAB_KEYS.get(tab).copied().unwrap_or("");
     lang_text(lang, key).unwrap_or_default()
 }
 
-/// The headings of the Settings tab (`text.bm.line.*`).
+/// The headings of the Settings tab (`text.bodymotion.line.*`).
 pub fn heading(i: usize, lang: &str) -> String {
     let key = HEADING_KEYS.get(i).copied().unwrap_or("");
     lang_text(lang, key).unwrap_or_default()
@@ -1085,7 +1057,7 @@ pub fn choice_name(i: usize, lang: &str) -> String {
 }
 
 /// The choice `i`'s value `n` as its button shows it (the
-/// `text.bm.<key>.<ENUM>` strings).
+/// `text.bodymotion.<key>.<ENUM>` strings).
 pub fn choice_value(i: usize, n: usize, lang: &str) -> String {
     let key = CHOICE_KEYS.get(i).copied().unwrap_or("");
     let value = CHOICE_VALUES

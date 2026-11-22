@@ -1,7 +1,7 @@
 // The game lists native mods without an icon (`ModInfo::of(m, None)` in
 // `list_native_mods`). This mod's row gets its icon here, right after that
 // list is built, so the Mods screen shows it like any content mod's. The PNG
-// lives in the mod's data folder (`icon.png`), which the player can replace.
+// lives in data folder (`icon.png`), which the player can replace.
 fn bm_native_icon(value: (), game: &mut crate::game::Game<'_>) {
     let _ = value;
     if let Some(info) = game.settings.mods.info.get_mut("bodymotion") {

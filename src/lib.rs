@@ -1,7 +1,7 @@
 //! Body Motion native mod: the launcher compiles this crate against the pinned game and calls `hooks()`.
 //! The settings live in `runtime` (pure, tested); the per-frame settings cache in `glue` is
 //! refreshed here and written back when the settings screen changes it; the game-side mixins
-//! read the cache. The settings screen is the custom GUI over the mod's own page in
+//! read the cache. The settings screen is the custom GUI over own page in
 //! Options > Mods.
 
 pub mod glue;
@@ -28,10 +28,10 @@ thread_local! {
 #[mod_api::horizon_mod]
 impl Hooks for Mod {
     fn register(&self, r: &mut dyn Registrar, _cx: &RegistrationContext) {
-        // The settings are registered so the mod's page exists in Options >
+        // The settings are registered so page exists in Options >
         // Mods (the page is the custom screen's host); the rows themselves are
         // always hidden by `scr_cover`, so the player only ever sees the
-        // custom screen. Values persist through the mod's own config file
+        // custom screen. Values persist through own config file
         // (`glue::save_settings`).
         for (key, label, default) in TOGGLES {
             let _ = r.register_setting(SettingSpec::toggle(key, label, default));
@@ -41,38 +41,38 @@ impl Hooks for Mod {
         }
         let _ = r.register_setting(SettingSpec::choice(
             "bodymotion.bow_pose",
-            "text.bm.enable.bowAnimation",
+            "text.bodymotion.enable.bowAnimation",
             [
-                "text.bm.enable.bowAnimation.VANILLA",
-                "text.bm.enable.bowAnimation.CUSTOM_V1",
+                "text.bodymotion.enable.bowAnimation.VANILLA",
+                "text.bodymotion.enable.bowAnimation.CUSTOM_V1",
             ],
             0,
         ));
         let _ = r.register_setting(SettingSpec::choice(
             "bodymotion.body_lock_mode",
-            "text.bm.rotationlock",
+            "text.bodymotion.rotationlock",
             [
-                "text.bm.rotationlock.NONE",
-                "text.bm.rotationlock.FIXED",
-                "text.bm.rotationlock.SMOOTH",
+                "text.bodymotion.rotationlock.NONE",
+                "text.bodymotion.rotationlock.FIXED",
+                "text.bodymotion.rotationlock.SMOOTH",
             ],
             0,
         ));
         let _ = r.register_setting(SettingSpec::choice(
             "bodymotion.hold_mode",
-            "text.bm.holdUpItemsMode",
+            "text.bodymotion.holdUpItemsMode",
             [
-                "text.bm.holdUpItemsMode.CONFIG",
-                "text.bm.holdUpItemsMode.ALL",
-                "text.bm.holdUpItemsMode.NONE",
-                "text.bm.holdUpItemsMode.CONFIG_INVERTED",
+                "text.bodymotion.holdUpItemsMode.CONFIG",
+                "text.bodymotion.holdUpItemsMode.ALL",
+                "text.bodymotion.holdUpItemsMode.NONE",
+                "text.bodymotion.holdUpItemsMode.CONFIG_INVERTED",
             ],
             0,
         ));
         let _ = r.register_setting(SettingSpec::choice(
             "bodymotion.hold_target",
-            "text.bm.holdUpTarget",
-            ["text.bm.holdUpTarget.NONE", "text.bm.holdUpTarget.CAMERA"],
+            "text.bodymotion.holdUpTarget",
+            ["text.bodymotion.holdUpTarget.NONE", "text.bodymotion.holdUpTarget.CAMERA"],
             1,
         ));
         let pose = r.register_arm_pose("bodymotion:bow_custom_v1", true, true);
@@ -141,7 +141,7 @@ impl Hooks for Mod {
     }
 
     /// Write the custom bow pose's arm angles. The old pose came from the
-    /// vanilla bow base plus the mod's deltas in `bm_anim`; that mixin still
+    /// vanilla bow base plus deltas in `bm_anim`; that mixin still
     /// runs afterwards, so this custom pose repeats the vanilla base exactly
     /// (a level aim: the hook has no head pitch/yaw) and the old look returns.
     fn arm_pose_transform(
@@ -168,86 +168,86 @@ impl Hooks for Mod {
 const TOGGLES: [(&str, &str, bool); 28] = [
     (
         "bodymotion.map3d",
-        "text.bm.enable.inworldmaprendering",
+        "text.bodymotion.enable.inworldmaprendering",
         true,
     ),
-    ("bodymotion.climb", "text.bm.enable.ladderanimation", true),
-    ("bodymotion.align_ladder", "text.bm.enable.rotatetoladder", true),
-    ("bodymotion.belly", "text.bm.enable.crawling", true),
-    ("bodymotion.consume", "text.bm.enable.eatdrinkanimation", true),
-    ("bodymotion.row", "text.bm.enable.rowboatanimation", true),
+    ("bodymotion.climb", "text.bodymotion.enable.ladderanimation", true),
+    ("bodymotion.align_ladder", "text.bodymotion.enable.rotatetoladder", true),
+    ("bodymotion.belly", "text.bodymotion.enable.crawling", true),
+    ("bodymotion.consume", "text.bodymotion.enable.eatdrinkanimation", true),
+    ("bodymotion.row", "text.bodymotion.enable.rowboatanimation", true),
     (
         "bodymotion.ride_horse",
-        "text.bm.enable.horseanimation",
+        "text.bodymotion.enable.horseanimation",
         true,
     ),
-    ("bodymotion.handoff", "text.bm.enable.itemSwapAnimation", true),
-    ("bodymotion.stroke", "text.bm.enable.petAnimation", true),
-    ("bodymotion.shiver", "text.bm.enable.freezingAnimation", true),
+    ("bodymotion.handoff", "text.bodymotion.enable.itemSwapAnimation", true),
+    ("bodymotion.stroke", "text.bodymotion.enable.petAnimation", true),
+    ("bodymotion.shiver", "text.bodymotion.enable.freezingAnimation", true),
     (
         "bodymotion.bow_lock",
-        "text.bm.enable.customBowRotationLock",
+        "text.bodymotion.enable.customBowRotationLock",
         false,
     ),
     (
         "bodymotion.bow_clamp",
-        "text.bm.enable.clampCrossbowAnimations",
+        "text.bodymotion.enable.clampCrossbowAnimations",
         false,
     ),
-    ("bodymotion.alight", "text.bm.enable.burningAnimation", true),
+    ("bodymotion.alight", "text.bodymotion.enable.burningAnimation", true),
     (
         "bodymotion.smooth",
-        "text.bm.enable.animationsmoothing",
+        "text.bodymotion.enable.animationsmoothing",
         true,
     ),
     (
         "bodymotion.smooth_legs",
-        "text.bm.disableLegSmoothing",
+        "text.bodymotion.disableLegSmoothing",
         false,
     ),
     (
         "bodymotion.lock_first_person",
-        "text.bm.enable.limitRotationLockToFP",
+        "text.bodymotion.enable.limitRotationLockToFP",
         true,
     ),
     (
         "bodymotion.lock_remote",
-        "text.bm.enable.applyRotationLockToEveryone",
+        "text.bodymotion.enable.applyRotationLockToEveryone",
         false,
     ),
     (
         "bodymotion.body_lock",
-        "text.bm.enable.rotationlocking",
+        "text.bodymotion.enable.rotationlocking",
         true,
     ),
-    ("bodymotion.sway_lamps", "text.bm.animateLanterns", true),
-    ("bodymotion.hold_self_only", "text.bm.enable.holdUpOnlySelf", false),
+    ("bodymotion.sway_lamps", "text.bodymotion.animateLanterns", true),
+    ("bodymotion.hold_self_only", "text.bodymotion.enable.holdUpOnlySelf", false),
     (
         "bodymotion.glide_tweak",
-        "text.bm.enable.tweakElytraAnimation",
+        "text.bodymotion.enable.tweakElytraAnimation",
         true,
     ),
     (
         "bodymotion.bed_hands",
-        "text.bm.enable.dontholditemsinbed",
+        "text.bodymotion.enable.dontholditemsinbed",
         true,
     ),
-    ("bodymotion.rest", "text.bm.enable.freezearmsinbed", true),
-    ("bodymotion.bow_offhand", "text.bm.enable.offhandhiding", true),
-    ("bodymotion.dash", "text.bm.enable.narutoRunning", false),
+    ("bodymotion.rest", "text.bodymotion.enable.freezearmsinbed", true),
+    ("bodymotion.bow_offhand", "text.bodymotion.enable.offhandhiding", true),
+    ("bodymotion.dash", "text.bodymotion.enable.narutoRunning", false),
     (
         "bodymotion.embrace",
-        "text.bm.enable.huggingAnimation",
+        "text.bodymotion.enable.huggingAnimation",
         false,
     ),
     (
         "bodymotion.tumble",
-        "text.bm.enable.fallingAnimation",
+        "text.bodymotion.enable.fallingAnimation",
         false,
     ),
     (
         "bodymotion.horse_stance",
-        "text.bm.enable.enableHorseLegAnimation",
+        "text.bodymotion.enable.enableHorseLegAnimation",
         false,
     ),
 ];
@@ -256,39 +256,39 @@ const TOGGLES: [(&str, &str, bool); 28] = [
 const SLIDERS: [(&str, &str, f64, f64, f64, f64); 8] = [
     (
         "bodymotion.climb_swing",
-        "text.bm.ladderAnimationAmplifier",
+        "text.bodymotion.ladderAnimationAmplifier",
         0.1,
         0.5,
         0.01,
-        0.35,
+        0.28,
     ),
     (
         "bodymotion.climb_reach",
-        "text.bm.ladderAnimationArmHeight",
+        "text.bodymotion.ladderAnimationArmHeight",
         1.0,
         3.0,
         0.1,
-        1.7,
+        1.55,
     ),
     (
         "bodymotion.climb_pace",
-        "text.bm.ladderAnimationArmSpeed",
+        "text.bodymotion.ladderAnimationArmSpeed",
         1.0,
         4.0,
         0.1,
-        2.0,
+        2.2,
     ),
     (
         "bodymotion.smooth_speed",
-        "text.bm.smoothingSpeed",
+        "text.bodymotion.smoothingSpeed",
         0.1,
         1.0,
         0.1,
-        0.2,
+        0.25,
     ),
     (
         "bodymotion.head_limit",
-        "text.bm.maxNormalAngle",
+        "text.bodymotion.maxNormalAngle",
         0.0,
         50.0,
         0.5,
@@ -296,7 +296,7 @@ const SLIDERS: [(&str, &str, f64, f64, f64, f64); 8] = [
     ),
     (
         "bodymotion.block_head_limit",
-        "text.bm.maxBlockingAngle",
+        "text.bodymotion.maxBlockingAngle",
         0.0,
         50.0,
         0.5,
@@ -304,7 +304,7 @@ const SLIDERS: [(&str, &str, f64, f64, f64, f64); 8] = [
     ),
     (
         "bodymotion.hold_offset_item",
-        "text.bm.holdUpItemOffset",
+        "text.bodymotion.holdUpItemOffset",
         -0.5,
         0.4,
         0.1,
@@ -312,7 +312,7 @@ const SLIDERS: [(&str, &str, f64, f64, f64, f64); 8] = [
     ),
     (
         "bodymotion.hold_offset_camera",
-        "text.bm.holdUpCameraOffset",
+        "text.bodymotion.holdUpCameraOffset",
         -0.3,
         0.6,
         0.1,

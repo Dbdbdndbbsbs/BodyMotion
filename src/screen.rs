@@ -1,5 +1,5 @@
-// The mod's config screen over the Options screen: it draws itself in
-// `screen_render_post` when the mod's own page in Options > Mods is open,
+// config screen over the Options screen: it draws itself in
+// `screen_render_post` when own page in Options > Mods is open,
 // takes all of the screen's input there, and Done, Reset and Escape close it.
 // The page's own rows are hidden (`draw_options` is cancelled). Settings live
 // in the glue cache; `Hooks::client_tick_pre` writes them when dirty.
@@ -23,7 +23,7 @@ fn with<R>(f: impl FnOnce(&mut gui::Gui) -> R) -> Option<R> {
     SCREEN.with(|s| s.borrow_mut().as_mut().map(f))
 }
 
-/// The mod's id in the installed list (the manifest's `id`).
+/// id in the installed list (the manifest's `id`).
 const ID: &str = "bodymotion";
 
 /// Whether the open screen is this mod's own page in Options > Mods.

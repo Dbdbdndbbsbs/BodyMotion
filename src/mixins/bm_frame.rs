@@ -1,4 +1,4 @@
-// The frame hook: refresh the mod's settings (and the local player's
+// The frame hook: refresh settings (and the local player's
 // powder-snow flag) for the animation half, once a frame.
 fn bm_frame(game: &mut crate::game::Game<'_>) {
     use bodymotion::glue as glue;
@@ -91,12 +91,12 @@ fn bm_frame(game: &mut crate::game::Game<'_>) {
         return;
     };
 
-    // the mod's LadderAnimation: onClimbable && !onGround && lastClimbable is a
+    // LadderAnimation: onClimbable && !onGround && lastClimbable is a
     // ladder or trapdoor. `last_climbable` is set only when the player is on
     // a climbable block, so its presence stands in for `climbable()`.
     // `PlayerMotion.on_climbable` is the client's own `onClimbable()` result
     // for this tick; not on the ground, it means the player is climbing
-    // (matching the mod's `onClimbable() && !onGround`).
+    // (matching `onClimbable() && !onGround`).
     let climbing = p.on_climbable && !p.ground.on_ground;
     // The body locks to the ladder's own block: its `facing` points away from
     // the wall, so the player faces the opposite way. `last_climbable` is the
@@ -141,18 +141,18 @@ fn bm_frame(game: &mut crate::game::Game<'_>) {
     let freezing = p.ticks_frozen > 0 && p.can_freeze();
     anim::set_freezing(freezing);
 
-    // the mod's BurningAnimation: on fire without fire resistance.
+    // BurningAnimation: on fire without fire resistance.
     let burning = p.fire_ticks > 0 && !p.status.fire_resistance;
     anim::set_burning(burning);
 
-    // the mod's FreezingAnimation: the local player stands in powder snow (the
+    // FreezingAnimation: the local player stands in powder snow (the
     // game already tracks it on `PlayerMotion`). BurningAnimation reads the
     // local player's remaining fire ticks, since the model's own field is
     // only synced for remote players.
     anim::set_powder_snow(p.in_powder_snow);
     anim::set_fire_ticks(p.fire_ticks);
 
-    // the mod's ItemSwapAnimation: the hands traded since the last frame.
+    // ItemSwapAnimation: the hands traded since the last frame.
     let main = game.inventory[game.selected]
         .as_ref()
         .map(|s| s.item.clone());
@@ -160,7 +160,7 @@ fn bm_frame(game: &mut crate::game::Game<'_>) {
     let age = game.player_model.as_ref().map_or(0, |m| m.age);
     anim::update_hands(age as f32, main, off);
 
-    // the mod's BoatAnimation: the boat the local player rides, and its paddles.
+    // BoatAnimation: the boat the local player rides, and its paddles.
     let boat = game
         .riding
         .and_then(|id| game.boats.iter().find(|b| b.id == id))
@@ -206,7 +206,7 @@ fn bm_frame(game: &mut crate::game::Game<'_>) {
         game.player_model.as_ref().map_or(0.0, |m| m.age as f32),
     );
 
-    // the mod's HorseAnimation: the mob ids riding a horse-family mount.
+    // HorseAnimation: the mob ids riding a horse-family mount.
     //
     // the mod checks the mount is saddled (`AbstractHorse.isSaddled`),
     // but riding is only possible on a saddled mount anyway, and the flag is
@@ -264,7 +264,7 @@ fn bm_frame(game: &mut crate::game::Game<'_>) {
         anim::set_horse_pump(0.0);
     }
 
-    // the mod's HugAnimation / PetAnimation: the local player crouches with another
+    // HugAnimation / PetAnimation: the local player crouches with another
     // crouching player (hug) or a wolf or cat (pet) in front of the eyes, on
     // about the same height. A ray along the view vector stands in for the
     // vanilla's entity hit test.

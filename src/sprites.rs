@@ -1,4 +1,4 @@
-// The mod's own checkbox sprites, 18x18: a dark panel with a black border, a
+// own checkbox sprites, 18x18: a dark panel with a black border, a
 // white check mark, and a white hover ring drawn over the box.
 
 pub(super) struct Sprite {

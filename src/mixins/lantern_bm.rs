@@ -1,8 +1,8 @@
-// the mod's LanternAnimation: draws a lantern held in a player's (or mannequin's)
-// third-person hand as its block model, hanging from a pivot above the hand
-// and swinging with the player's movement. `lantern_hide_bm.rs` makes the
-// resolver return an empty state for the same item so the flat item model is
-// not drawn. The spring state lives in `native_bm_lantern` (lantern_glue.rs).
+// Draws a lantern held in a player's (or mannequin's) third-person hand as its
+// block model, hanging from a pivot above the hand and trailing the hand's
+// motion. `lantern_hide_bm.rs` makes the resolver return an empty state for
+// the same item so the flat item model is not drawn. The trail state lives in
+// `native_bm_lantern` (lantern_glue.rs).
 fn bm_held_lantern(
     game: &crate::game::Game<'_>,
     mob: &horizon_client_lib::mobs::Mob,
@@ -68,7 +68,7 @@ fn bm_held_lantern(
             ))
             * glam::Mat4::from_rotation_y(deg(-180.0))
             * glam::Mat4::from_rotation_x(deg(90.0));
-        // The view yaw the swing is measured against (smoothed inside `spring`).
+        // The view yaw the sway is measured against (smoothed inside `spring`).
         let t = hand.w_axis;
         let vel = lantern::spring(
             mob,
@@ -82,22 +82,22 @@ fn bm_held_lantern(
         let right = [forward[2], 0.0, -forward[0]];
         let forward_vel = vel[0] * forward[0] + vel[2] * forward[2];
         let right_vel = vel[0] * right[0] + vel[2] * right[2];
-        let swing_x = (forward_vel as f32 * 90.0).clamp(-90.0, 90.0) - mob.head_pitch * 0.25;
-        let swing_z = (-(right_vel as f32) * 90.0).clamp(-90.0, 90.0);
+        let swing_x = (forward_vel as f32 * 60.0).clamp(-60.0, 60.0) - mob.head_pitch * 0.2;
+        let swing_z = (-(right_vel as f32) * 60.0).clamp(-60.0, 60.0);
         // Scale down, move to the hang point, pivot to the top of the chain,
         // the chain hangs down (-90 around X) and swings.
         let m = hand
-            * glam::Mat4::from_scale(glam::Vec3::splat(0.6))
+            * glam::Mat4::from_scale(glam::Vec3::splat(0.62))
             * glam::Mat4::from_translation(glam::Vec3::new(
-                if left { -0.45 } else { -0.5 },
-                0.4,
-                -0.3,
+                if left { -0.35 } else { -0.4 },
+                0.3,
+                -0.28,
             ))
-            * glam::Mat4::from_translation(glam::Vec3::new(0.5, 0.6, 0.5))
+            * glam::Mat4::from_translation(glam::Vec3::new(0.45, 0.55, 0.48))
             * glam::Mat4::from_rotation_x(deg(-90.0))
             * glam::Mat4::from_rotation_x(deg(swing_x))
             * glam::Mat4::from_rotation_z(deg(swing_z))
-            * glam::Mat4::from_translation(glam::Vec3::new(-0.5, -0.6, -0.5));
+            * glam::Mat4::from_translation(glam::Vec3::new(-0.45, -0.55, -0.48));
         // The lantern item's block model (`Block.byItem(item).defaultBlockState()`).
         let Some(state) = game.pack.assets.registry.default_state(&item) else {
             continue;

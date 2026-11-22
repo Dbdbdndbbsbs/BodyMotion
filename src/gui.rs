@@ -1,4 +1,4 @@
-// The mod's settings screen, built like the game's own GUI screens. As in the
+// settings screen, built like the game's own GUI screens. As in the
 // the root panel has a fixed size and is centred on the screen; the game's GUI
 // scale handles how large it looks, so nothing here re-scales with the window.
 // This is the GUI redrawn pixel by pixel: the root panel, one `Settings` tab
@@ -174,16 +174,16 @@ const ROW_HEIGHT: i32 = 22;
 const CHECKBOX: i32 = 18;
 /// The checkbox's vertical offset inside a 22px row.
 const CHECKBOX_OFFSET: i32 = (ROW_HEIGHT - CHECKBOX) / 2;
-/// A toggle/slider widget's width (10 cells of the mod's 18-px grid).
+/// A toggle/slider widget's width (10 cells of 18-px grid).
 const WIDGET_WIDTH: i32 = 180;
 /// A widget's height (one grid cell).
 const WIDGET_HEIGHT: i32 = 18;
-/// The enum button's width (18 cells with the mod's -13 gap).
+/// The enum button's width (18 cells with -13 gap).
 const CHOICE_WIDTH: i32 = 103;
 /// The slider thumb's width.
 const THUMB_WIDTH: i32 = 8;
 
-/// The Settings tab's rows come from `runtime::row` (the mod's order).
+/// The Settings tab's rows come from `runtime::row` (order).
 
 /// Constants for item tabs: the tab bar height is the same as Settings, but
 /// the content area is different. Item lists have a search field at the bottom
@@ -568,7 +568,7 @@ impl Gui {
         self.tooltip = None;
         self.draw_list(game, batch, mouse, ch);
 
-        // Done and Reset (vanilla buttons, as the mod's custom ones).
+        // Done and Reset (vanilla buttons, as custom ones).
         let by = self.button_y();
         for (hit, r, key) in [(Hit::Done, DONE, "gui.done"), (Hit::Reset, RESET, "controls.reset")] {
             let focused = self.focus == Some(if hit == Hit::Done { Widget::Done } else { Widget::Reset });

@@ -1,4 +1,4 @@
-// the mod's MapRendering: `map_rect` looks up a warmed map's atlas rect
+// MapRendering: `map_rect` looks up a warmed map's atlas rect
 // (the entity pass cannot upload); `map_quads` draws the map texture and its
 // vanilla decorations at an already-computed pose. `map_paper_quads` draws
 // just the paper for an empty map, as vanilla and the mod show it.
