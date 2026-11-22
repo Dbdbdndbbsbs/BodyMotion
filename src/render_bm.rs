@@ -1,11 +1,11 @@
 // the mod's MapAnimation: the pose of a filled map in a player's third-person hand,
-// from the mod `MapAnimation.applyAnimation` and
+// from the map pose helpers
 // `MapRenderer.renderFirstPersonMap`. `hand` is `held_item_transform`'s matrix
 // (the arm, then `ItemInHandLayer`'s offset), which this undoes to rebuild
 // the mod's `translateToHand` chain.
 use glam::{Mat4, Vec3};
 
-/// `MapAnimation.applyAnimation` for one arm, then
+/// The map pose for one arm, then
 /// `MapRenderer.renderFirstPersonMap`. `left` is the arm; `main_hand` says
 /// whether it is the main arm; `off_hand_empty` picks the two-handed pose.
 pub fn held_map_matrix(hand: Mat4, left: bool, main_hand: bool, off_hand_empty: bool) -> Mat4 {

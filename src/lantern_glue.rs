@@ -1,12 +1,12 @@
 // the mod's LanternAnimation: the per-entity spring state of a held lantern. The
-// lantern hangs from a pivot above the hand and chases it (`HeldItemState`):
+// lantern hangs from a pivot above the hand and chases it (a held-item spring):
 // stiffness 0.15, damping 0.95, one full physics tick per game tick, snapped
 // when it is more than 10 blocks from the hand.
 
 use crate::mobs::Mob;
 use std::cell::RefCell;
 
-/// `LanternAnimation.HeldItemState`: the lantern's position, velocity and the
+/// The lantern's position, velocity and the
 /// velocity of the previous tick (the swing lerps between them).
 #[derive(Clone, Copy)]
 pub struct LanternState {

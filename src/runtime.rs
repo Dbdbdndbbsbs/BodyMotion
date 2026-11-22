@@ -54,10 +54,10 @@ const KEY_HOLD_ONLY_SELF: &str = "bodymotion.holdUpOnlySelf";
 const KEY_DONT_HOLD_BED: &str = "bodymotion.dontHoldItemsInBed";
 
 /// Tab identifiers used by the item lists: 0 = Settings, 1 = Hold Up Items,
-/// 2 = Lanterns (the mod's WTabPanel order).
+/// 2 = Lanterns (the screen's tab order).
 pub(crate) const ITEM_TAB_HOLDING: usize = 1;
 
-/// Defaults from the mod Config.java for holding items (field holdingItems).
+/// Default holding-items list (stored under `holdingItems`).
 pub const DEFAULT_HOLDING: &[&str] = &[    "minecraft:clock",
     "minecraft:compass",
     "minecraft:torch",
@@ -96,7 +96,7 @@ pub const DEFAULT_HOLDING: &[&str] = &[    "minecraft:clock",
     "minecraft:waxed_weathered_copper_lantern",
 ];
 
-/// Defaults from Config.java for lantern items (field lanternItems).
+/// Default lantern-items list (stored under `lanternItems`).
 pub const DEFAULT_LANTERNS: &[&str] = &[
     "minecraft:waxed_copper_lantern",
     "minecraft:waxed_exposed_copper_lantern",
@@ -771,7 +771,7 @@ impl Settings {
     }
 }
 
-/// The slider `i`'s (min, max, step), from the mod's `getDoubleOption`s.
+/// The slider `i`'s (min, max, step), from the slider specs.
 pub fn slider_range(i: usize) -> (f32, f32, f32) {
     match i {
         0 => (0.1, 0.5, 0.01),
@@ -797,7 +797,7 @@ pub fn choice_len(i: usize) -> usize {
     }
 }
 
-/// A slider value as the mod's `DecimalFormat("###.##")` prints it: no
+/// A slider value rounded to two decimals: no
 /// trailing zeros, comma in Russian.
 pub fn number_text(v: f32, ru: bool) -> String {
     let mut s = format!("{v:.2}");

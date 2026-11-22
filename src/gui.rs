@@ -568,7 +568,7 @@ impl Gui {
         self.tooltip = None;
         self.draw_list(game, batch, mouse, ch);
 
-        // Done and Reset (vanilla buttons, as the mod's WButton).
+        // Done and Reset (vanilla buttons, as the mod's custom ones).
         let by = self.button_y();
         for (hit, r, key) in [(Hit::Done, DONE, "gui.done"), (Hit::Reset, RESET, "controls.reset")] {
             let focused = self.focus == Some(if hit == Hit::Done { Widget::Done } else { Widget::Reset });

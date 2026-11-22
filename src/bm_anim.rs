@@ -204,7 +204,7 @@ thread_local! {
     /// the horse's body pitches up by 45°, and the rider's legs follow it.
     static HORSE_STAND: Cell<f32> = const { Cell::new(0.0) };
     /// Remote players' FallingAnimation data, per mob id: the last y and the
-    /// falling speed (`FallingData`).
+    /// falling speed (the per-mob fall record).
     static FALL_MAP: RefCell<crate::fast_hash::FxHashMap<u32, (f64, f32, u32)>> =
         RefCell::new(crate::fast_hash::FxHashMap::default());
     /// The Hold Up Items list (the Hold Up Items tab), from the frame hook.
@@ -221,7 +221,7 @@ thread_local! {
         RefCell::new(crate::fast_hash::FxHashMap::default());
 }
 
-/// `PlayerTransformer`'s per-limb smoothing state: `prev` is the last rendered
+/// Per-limb smoothing state: `prev` is the last rendered
 /// rotation, `target` the rotation the next render interpolates to.
 #[derive(Clone, Copy, Debug)]
 struct SmoothEntry {
@@ -1700,7 +1700,7 @@ fn bm_flail(
 }
 
 /// the mod's AnimationSmoothing (`enableAnimationSmoothing`): the mod's
-/// `PlayerTransformer.interpolate`, ported per mob. A new tick moves the
+/// A new tick moves the
 /// target 20%-ish toward the freshly animated pose (the configurable speed);
 /// every render interpolates from the last rendered pose to that target by
 /// the partial tick, so remote players' arms glide between updates. The legs
@@ -1839,7 +1839,7 @@ fn custom_bow_body(m: &Mob) -> Option<f32> {
     Some(m.yaw + if bow_left { 40.0 } else { -40.0 })
 }
 
-/// Turn the local player's body to the head (PlayerTransformer's rotation
+/// Turn the local player's body to the head (the body-follows-head rotation
 /// lock). The camera entity is limited to first person when the setting says
 /// so; a ladder's body lock and a vehicle keep the vanilla body.
 pub fn rotate_local_body(m: &mut Mob, first_person: bool) {

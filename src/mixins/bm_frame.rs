@@ -321,7 +321,7 @@ fn bm_frame(game: &mut crate::game::Game<'_>) {
     anim::set_hug(hug);
     anim::set_pet(pet, pet_target);
 
-    // PlayerTransformer's rotation lock: the body follows the head. The
+    // The rotation lock: the body follows the head. The
     // camera entity obeys `limitRotationLockToFP`; other players need
     // `applyRotationLockToEveryone`. The custom bow's body turn is separate
     // (`customBowRotationLock`).
