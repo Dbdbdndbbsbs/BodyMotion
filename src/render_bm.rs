@@ -19,48 +19,48 @@ pub fn held_map_matrix(hand: Mat4, left: bool, main_hand: bool, off_hand_empty: 
         // Two-handed (one map, empty off hand): the map is held level in both
         // hands, chest-high.
         (
-            Mat4::from_rotation_x(deg(-88.0))
-                * Mat4::from_rotation_y(deg(196.0))
-                * Mat4::from_rotation_z(deg(14.0))
-                * Mat4::from_translation(Vec3::new(f / 16.0, 0.22, -0.6)),
+            Mat4::from_rotation_x(deg(-89.5))
+                * Mat4::from_rotation_y(deg(203.0))
+                * Mat4::from_rotation_z(deg(11.0))
+                * Mat4::from_translation(Vec3::new(f / 16.0, 0.235, -0.62)),
             if left {
-                Mat4::from_rotation_y(deg(148.0))
-                    * Mat4::from_rotation_z(deg(160.0))
-                    * Mat4::from_scale(Vec3::splat(0.36))
-                    * Mat4::from_translation(Vec3::new(0.56, -1.18, 0.12))
-                    * Mat4::from_scale(Vec3::splat(0.013_2))
+                Mat4::from_rotation_y(deg(156.0))
+                    * Mat4::from_rotation_z(deg(165.0))
+                    * Mat4::from_scale(Vec3::splat(0.375))
+                    * Mat4::from_translation(Vec3::new(0.58, -1.22, 0.14))
+                    * Mat4::from_scale(Vec3::splat(0.013_7))
             } else {
-                Mat4::from_rotation_y(deg(149.0))
-                    * Mat4::from_rotation_z(deg(206.0))
-                    * Mat4::from_scale(Vec3::splat(0.36))
-                    * Mat4::from_translation(Vec3::new(-0.92, -1.72, 0.05))
-                    * Mat4::from_scale(Vec3::splat(0.013_2))
+                Mat4::from_rotation_y(deg(153.5))
+                    * Mat4::from_rotation_z(deg(215.0))
+                    * Mat4::from_scale(Vec3::splat(0.375))
+                    * Mat4::from_translation(Vec3::new(-0.95, -1.78, 0.02))
+                    * Mat4::from_scale(Vec3::splat(0.013_7))
             },
         )
     } else if left {
         // Left hand: the single-handed pose, held at the same distance as the
         // right so both hands sit level.
         (
-            Mat4::from_rotation_x(deg(-87.0))
-                * Mat4::from_rotation_y(deg(193.0))
-                * Mat4::from_translation(Vec3::new(f / 16.0, 0.12, -0.6)),
-            Mat4::from_rotation_y(deg(154.0))
-                * Mat4::from_rotation_z(deg(174.0))
-                * Mat4::from_scale(Vec3::splat(0.36))
-                * Mat4::from_translation(Vec3::new(-0.08, -1.15, 0.03))
-                * Mat4::from_scale(Vec3::splat(0.009_4)),
+            Mat4::from_rotation_x(deg(-89.0))
+                * Mat4::from_rotation_y(deg(201.5))
+                * Mat4::from_translation(Vec3::new(f / 16.0, 0.13, -0.62)),
+            Mat4::from_rotation_y(deg(158.5))
+                * Mat4::from_rotation_z(deg(182.0))
+                * Mat4::from_scale(Vec3::splat(0.375))
+                * Mat4::from_translation(Vec3::new(-0.12, -1.18, 0.02))
+                * Mat4::from_scale(Vec3::splat(0.009_75)),
         )
     } else {
         // Right hand: the same pose, with a small Z push toward the face.
         (
-            Mat4::from_rotation_x(deg(-87.0))
-                * Mat4::from_rotation_y(deg(193.0))
-                * Mat4::from_translation(Vec3::new(f / 16.0, 0.12, -0.6)),
-            Mat4::from_rotation_y(deg(154.0))
-                * Mat4::from_rotation_z(deg(174.0))
-                * Mat4::from_scale(Vec3::splat(0.36))
-                * Mat4::from_translation(Vec3::new(-0.08, -1.15, -0.18))
-                * Mat4::from_scale(Vec3::splat(0.009_4)),
+            Mat4::from_rotation_x(deg(-89.0))
+                * Mat4::from_rotation_y(deg(201.5))
+                * Mat4::from_translation(Vec3::new(f / 16.0, 0.13, -0.62)),
+            Mat4::from_rotation_y(deg(161.5))
+                * Mat4::from_rotation_z(deg(178.0))
+                * Mat4::from_scale(Vec3::splat(0.375))
+                * Mat4::from_translation(Vec3::new(-0.08, -1.22, -0.18))
+                * Mat4::from_scale(Vec3::splat(0.009_75)),
         )
     };
     hand * undo * outer * inner
