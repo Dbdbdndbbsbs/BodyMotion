@@ -1,6 +1,6 @@
 // The mod's own half: the mod's settings (one per animation, the
-// sliders and the enum choices of the original's config screen), translated
-// into every language the original ships. No game types here; `glue.rs`
+// sliders and the enum choices of the mod's config screen), translated
+// into every language the mod ships. No game types here; `glue.rs`
 // applies it. This file is also the bundle's Cargo library, so its tests run
 // without a Horizon build.
 
@@ -9,55 +9,55 @@ pub const NAME: &str = "Body Motion";
 pub const VERSION: &str = "0.2.78";
 pub const DESCRIPTION: &str = "Smoother and more expressive third-person animations: eating, drinking, climbing, riding, maps, lanterns and more.";
 
-const KEY_ON: &str = "bm.enabled";
-const KEY_EAT: &str = "bm.eatDrink";
-const KEY_LADDER: &str = "bm.ladder";
-const KEY_ROTATE_LADDER: &str = "bm.rotateToLadder";
-const KEY_LADDER_AMP: &str = "bm.ladderAnimationAmplifier";
-const KEY_LADDER_HEIGHT: &str = "bm.ladderAnimationArmHeight";
-const KEY_LADDER_SPEED: &str = "bm.ladderAnimationArmSpeed";
-const KEY_BOAT: &str = "bm.boat";
-const KEY_SWAP: &str = "bm.itemSwap";
-const KEY_BURN: &str = "bm.burning";
-const KEY_FREEZE: &str = "bm.freezing";
-const KEY_CRAWL: &str = "bm.crawling";
-const KEY_SLEEP: &str = "bm.sleep";
-const KEY_MAPS: &str = "bm.inWorldMapRendering";
-const KEY_BOW_FIXES: &str = "bm.offhandHiding";
-const KEY_HOLDING: &str = "bm.holdingItems";
-const KEY_LANTERNS: &str = "bm.lanternItems";
-const KEY_ANIMATE_LANTERNS: &str = "bm.animateLanterns";
-const KEY_HUG: &str = "bm.huggingAnimation";
-const KEY_PET: &str = "bm.petAnimation";
-const KEY_NARUTO: &str = "bm.narutoRunning";
-const KEY_FALLING: &str = "bm.fallingAnimation";
-const KEY_HORSE: &str = "bm.enableHorseAnimation";
-const KEY_HORSE_LEG: &str = "bm.enableHorseLegAnimation";
-const KEY_ROTATION: &str = "bm.enableRotationLocking";
-const KEY_ROTATION_MODE: &str = "bm.rotationLock";
-const KEY_LIMIT_FP: &str = "bm.limitRotationLockToFP";
-const KEY_ROTATION_EVERYONE: &str = "bm.applyRotationLockToEveryone";
-const KEY_MAX_NORMAL: &str = "bm.maxNormalAngle";
-const KEY_MAX_BLOCKING: &str = "bm.maxBlockingAngle";
-const KEY_BOW: &str = "bm.bowAnimation";
-const KEY_CUSTOM_BOW_ROTATION: &str = "bm.customBowRotationLock";
-const KEY_CLAMP: &str = "bm.clampCrossbowAnimations";
-const KEY_ELYTRA: &str = "bm.tweakElytraAnimation";
-const KEY_SMOOTHING: &str = "bm.enableAnimationSmoothing";
-const KEY_DISABLE_LEG_SMOOTHING: &str = "bm.disableLegSmoothing";
-const KEY_SMOOTHING_SPEED: &str = "bm.smoothingSpeed";
-const KEY_HOLD_MODE: &str = "bm.holdUpItemsMode";
-const KEY_HOLD_TARGET: &str = "bm.holdUpTarget";
-const KEY_HOLD_ITEM_OFFSET: &str = "bm.holdUpItemOffset";
-const KEY_HOLD_CAMERA_OFFSET: &str = "bm.holdUpCameraOffset";
-const KEY_HOLD_ONLY_SELF: &str = "bm.holdUpOnlySelf";
-const KEY_DONT_HOLD_BED: &str = "bm.dontHoldItemsInBed";
+const KEY_ON: &str = "bodymotion.enabled";
+const KEY_EAT: &str = "bodymotion.eatDrink";
+const KEY_LADDER: &str = "bodymotion.ladder";
+const KEY_ROTATE_LADDER: &str = "bodymotion.rotateToLadder";
+const KEY_LADDER_AMP: &str = "bodymotion.ladderAnimationAmplifier";
+const KEY_LADDER_HEIGHT: &str = "bodymotion.ladderAnimationArmHeight";
+const KEY_LADDER_SPEED: &str = "bodymotion.ladderAnimationArmSpeed";
+const KEY_BOAT: &str = "bodymotion.boat";
+const KEY_SWAP: &str = "bodymotion.itemSwap";
+const KEY_BURN: &str = "bodymotion.burning";
+const KEY_FREEZE: &str = "bodymotion.freezing";
+const KEY_CRAWL: &str = "bodymotion.crawling";
+const KEY_SLEEP: &str = "bodymotion.sleep";
+const KEY_MAPS: &str = "bodymotion.inWorldMapRendering";
+const KEY_BOW_FIXES: &str = "bodymotion.offhandHiding";
+const KEY_HOLDING: &str = "bodymotion.holdingItems";
+const KEY_LANTERNS: &str = "bodymotion.lanternItems";
+const KEY_ANIMATE_LANTERNS: &str = "bodymotion.animateLanterns";
+const KEY_HUG: &str = "bodymotion.huggingAnimation";
+const KEY_PET: &str = "bodymotion.petAnimation";
+const KEY_NARUTO: &str = "bodymotion.narutoRunning";
+const KEY_FALLING: &str = "bodymotion.fallingAnimation";
+const KEY_HORSE: &str = "bodymotion.enableHorseAnimation";
+const KEY_HORSE_LEG: &str = "bodymotion.enableHorseLegAnimation";
+const KEY_ROTATION: &str = "bodymotion.enableRotationLocking";
+const KEY_ROTATION_MODE: &str = "bodymotion.rotationLock";
+const KEY_LIMIT_FP: &str = "bodymotion.limitRotationLockToFP";
+const KEY_ROTATION_EVERYONE: &str = "bodymotion.applyRotationLockToEveryone";
+const KEY_MAX_NORMAL: &str = "bodymotion.maxNormalAngle";
+const KEY_MAX_BLOCKING: &str = "bodymotion.maxBlockingAngle";
+const KEY_BOW: &str = "bodymotion.bowAnimation";
+const KEY_CUSTOM_BOW_ROTATION: &str = "bodymotion.customBowRotationLock";
+const KEY_CLAMP: &str = "bodymotion.clampCrossbowAnimations";
+const KEY_ELYTRA: &str = "bodymotion.tweakElytraAnimation";
+const KEY_SMOOTHING: &str = "bodymotion.enableAnimationSmoothing";
+const KEY_DISABLE_LEG_SMOOTHING: &str = "bodymotion.disableLegSmoothing";
+const KEY_SMOOTHING_SPEED: &str = "bodymotion.smoothingSpeed";
+const KEY_HOLD_MODE: &str = "bodymotion.holdUpItemsMode";
+const KEY_HOLD_TARGET: &str = "bodymotion.holdUpTarget";
+const KEY_HOLD_ITEM_OFFSET: &str = "bodymotion.holdUpItemOffset";
+const KEY_HOLD_CAMERA_OFFSET: &str = "bodymotion.holdUpCameraOffset";
+const KEY_HOLD_ONLY_SELF: &str = "bodymotion.holdUpOnlySelf";
+const KEY_DONT_HOLD_BED: &str = "bodymotion.dontHoldItemsInBed";
 
 /// Tab identifiers used by the item lists: 0 = Settings, 1 = Hold Up Items,
-/// 2 = Lanterns (the original's WTabPanel order).
+/// 2 = Lanterns (the mod's WTabPanel order).
 pub(crate) const ITEM_TAB_HOLDING: usize = 1;
 
-/// Defaults from the original Config.java for holding items (field holdingItems).
+/// Defaults from the mod Config.java for holding items (field holdingItems).
 pub const DEFAULT_HOLDING: &[&str] = &[    "minecraft:clock",
     "minecraft:compass",
     "minecraft:torch",
@@ -110,7 +110,7 @@ pub const DEFAULT_LANTERNS: &[&str] = &[
     "minecraft:copper_lantern",
 ];
 
-/// `RotationLock` (the original's enum).
+/// `RotationLock` (the mod's enum).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum RotationLock {
     None,
@@ -118,7 +118,7 @@ pub enum RotationLock {
     Smooth,
 }
 
-/// `HoldUpModes` (the original's enum).
+/// `HoldUpModes` (the mod's enum).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum HoldUpMode {
     Config,
@@ -127,21 +127,21 @@ pub enum HoldUpMode {
     ConfigInverted,
 }
 
-/// `HoldUpTarget` (the original's enum).
+/// `HoldUpTarget` (the mod's enum).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum HoldUpTarget {
     None,
     Camera,
 }
 
-/// `BowAnimation` (the original's enum).
+/// `BowAnimation` (the mod's enum).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum BowAnimation {
     Vanilla,
     CustomV1,
 }
 
-/// One row of the Settings tab, in the original's order. Headings and the
+/// One row of the Settings tab, in the mod's order. Headings and the
 /// disabled rows carry an index into their own label tables.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Row {
@@ -429,7 +429,7 @@ impl Settings {
             },
             limit_rotation_fp: is_on(&read, KEY_LIMIT_FP, d.limit_rotation_fp),
             rotation_everyone: is_on(&read, KEY_ROTATION_EVERYONE, d.rotation_everyone),
-            // The original stores the enum; an older boolean `true` maps to
+            // the mod stores the enum; an older boolean `true` maps to
             // the custom pose.
             bow_mode: match read(KEY_BOW).as_deref() {
                 Some("CUSTOM_V1") | Some("true") => BowAnimation::CustomV1,
@@ -771,7 +771,7 @@ impl Settings {
     }
 }
 
-/// The slider `i`'s (min, max, step), from the original's `getDoubleOption`s.
+/// The slider `i`'s (min, max, step), from the mod's `getDoubleOption`s.
 pub fn slider_range(i: usize) -> (f32, f32, f32) {
     match i {
         0 => (0.1, 0.5, 0.01),
@@ -797,7 +797,7 @@ pub fn choice_len(i: usize) -> usize {
     }
 }
 
-/// A slider value as the original's `DecimalFormat("###.##")` prints it: no
+/// A slider value as the mod's `DecimalFormat("###.##")` prints it: no
 /// trailing zeros, comma in Russian.
 pub fn number_text(v: f32, ru: bool) -> String {
     let mut s = format!("{v:.2}");
@@ -968,7 +968,7 @@ const CHOICE_KEYS: [&str; 4] = [
     "text.bm.holdUpTarget",
 ];
 
-/// The enum constant name per choice value (the original's enum variants).
+/// The enum constant name per choice value (the mod's enum variants).
 const CHOICE_VALUES: &[&[&str]] = &[
     &["VANILLA", "CUSTOM_V1"],
     &["NONE", "FIXED", "SMOOTH"],
@@ -976,7 +976,7 @@ const CHOICE_VALUES: &[&[&str]] = &[
     &["NONE", "CAMERA"],
 ];
 
-/// The headings' translation keys (`text.bm.line.*`). The original's
+/// The headings' translation keys (`text.bm.line.*`). the mod's
 /// "Unfinished/Deprecated" heading is gone: its falling animation moved into
 /// Fun, finished.
 const HEADING_KEYS: [&str; 7] = [
@@ -1221,7 +1221,7 @@ mod tests {
     }
 
     #[test]
-    fn rows_match_the_original_order() {
+    fn rows_match_the_screen_order() {
         assert_eq!(row(0), Row::Heading(0));
         assert_eq!(row(1), Row::Toggle(0));
         assert_eq!(row(4), Row::Slider(0));

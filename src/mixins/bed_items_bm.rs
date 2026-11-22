@@ -1,4 +1,4 @@
-// the original mod `dontHoldItemsInBed`: a sleeping player (or villager) holds no item.
+// the mod `dontHoldItemsInBed`: a sleeping player (or villager) holds no item.
 // `held_item_geometry` draws both hands' items, so cancelling it drops the
 // whole ItemInHandLayer for the frame.
 fn bm_bed_items(

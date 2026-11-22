@@ -1,4 +1,4 @@
-// the original mod's MapRendering: draws a filled map held in a player's or mannequin's hand
+// the mod's MapRendering: draws a filled map held in a player's or mannequin's hand
 // instead of the flat item icon, and an empty map as its paper. Inlined at the
 // start of `held_item_geometry`; `map_hide_bm` then makes the resolver return
 // an empty state for the same third-person map so the flat icon is not drawn.

@@ -1,6 +1,7 @@
-// the original mod's MapRendering: uploads map textures for all held maps before the mob
+// the mod's MapRendering: uploads map textures for all held maps before the mob
 // geometry pass draws them. Inlined at the start of `entity_geometry`.
 fn bm_warm_held_maps(game: &mut crate::game::Game<'_>) {
+    crate::game::native_bm_maps::clear_frame();
     let mut ids = Vec::new();
     {
         let mut note = |stack: Option<&crate::items::ItemStack>| {

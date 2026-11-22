@@ -40,7 +40,7 @@ impl Hooks for Mod {
             let _ = r.register_setting(SettingSpec::range(key, label, min, max, step, default));
         }
         let _ = r.register_setting(SettingSpec::choice(
-            "bm.bowAnimation",
+            "bodymotion.bowAnimation",
             "text.bm.enable.bowAnimation",
             [
                 "text.bm.enable.bowAnimation.VANILLA",
@@ -49,7 +49,7 @@ impl Hooks for Mod {
             0,
         ));
         let _ = r.register_setting(SettingSpec::choice(
-            "bm.rotationLock",
+            "bodymotion.rotationLock",
             "text.bm.rotationlock",
             [
                 "text.bm.rotationlock.NONE",
@@ -59,7 +59,7 @@ impl Hooks for Mod {
             0,
         ));
         let _ = r.register_setting(SettingSpec::choice(
-            "bm.holdUpItemsMode",
+            "bodymotion.holdUpItemsMode",
             "text.bm.holdUpItemsMode",
             [
                 "text.bm.holdUpItemsMode.CONFIG",
@@ -70,7 +70,7 @@ impl Hooks for Mod {
             0,
         ));
         let _ = r.register_setting(SettingSpec::choice(
-            "bm.holdUpTarget",
+            "bodymotion.holdUpTarget",
             "text.bm.holdUpTarget",
             ["text.bm.holdUpTarget.NONE", "text.bm.holdUpTarget.CAMERA"],
             1,
@@ -167,86 +167,86 @@ impl Hooks for Mod {
 /// The toggles, in the screen's order: storage key, translation key, default.
 const TOGGLES: [(&str, &str, bool); 28] = [
     (
-        "bm.inWorldMapRendering",
+        "bodymotion.inWorldMapRendering",
         "text.bm.enable.inworldmaprendering",
         true,
     ),
-    ("bm.ladder", "text.bm.enable.ladderanimation", true),
-    ("bm.rotateToLadder", "text.bm.enable.rotatetoladder", true),
-    ("bm.crawling", "text.bm.enable.crawling", true),
-    ("bm.eatDrink", "text.bm.enable.eatdrinkanimation", true),
-    ("bm.boat", "text.bm.enable.rowboatanimation", true),
+    ("bodymotion.ladder", "text.bm.enable.ladderanimation", true),
+    ("bodymotion.rotateToLadder", "text.bm.enable.rotatetoladder", true),
+    ("bodymotion.crawling", "text.bm.enable.crawling", true),
+    ("bodymotion.eatDrink", "text.bm.enable.eatdrinkanimation", true),
+    ("bodymotion.boat", "text.bm.enable.rowboatanimation", true),
     (
-        "bm.enableHorseAnimation",
+        "bodymotion.enableHorseAnimation",
         "text.bm.enable.horseanimation",
         true,
     ),
-    ("bm.itemSwap", "text.bm.enable.itemSwapAnimation", true),
-    ("bm.petAnimation", "text.bm.enable.petAnimation", true),
-    ("bm.freezing", "text.bm.enable.freezingAnimation", true),
+    ("bodymotion.itemSwap", "text.bm.enable.itemSwapAnimation", true),
+    ("bodymotion.petAnimation", "text.bm.enable.petAnimation", true),
+    ("bodymotion.freezing", "text.bm.enable.freezingAnimation", true),
     (
-        "bm.customBowRotationLock",
+        "bodymotion.customBowRotationLock",
         "text.bm.enable.customBowRotationLock",
         false,
     ),
     (
-        "bm.clampCrossbowAnimations",
+        "bodymotion.clampCrossbowAnimations",
         "text.bm.enable.clampCrossbowAnimations",
         false,
     ),
-    ("bm.burning", "text.bm.enable.burningAnimation", true),
+    ("bodymotion.burning", "text.bm.enable.burningAnimation", true),
     (
-        "bm.enableAnimationSmoothing",
+        "bodymotion.enableAnimationSmoothing",
         "text.bm.enable.animationsmoothing",
         true,
     ),
     (
-        "bm.disableLegSmoothing",
+        "bodymotion.disableLegSmoothing",
         "text.bm.disableLegSmoothing",
         false,
     ),
     (
-        "bm.limitRotationLockToFP",
+        "bodymotion.limitRotationLockToFP",
         "text.bm.enable.limitRotationLockToFP",
         true,
     ),
     (
-        "bm.applyRotationLockToEveryone",
+        "bodymotion.applyRotationLockToEveryone",
         "text.bm.enable.applyRotationLockToEveryone",
         false,
     ),
     (
-        "bm.enableRotationLocking",
+        "bodymotion.enableRotationLocking",
         "text.bm.enable.rotationlocking",
         true,
     ),
-    ("bm.animateLanterns", "text.bm.animateLanterns", true),
-    ("bm.holdUpOnlySelf", "text.bm.enable.holdUpOnlySelf", false),
+    ("bodymotion.animateLanterns", "text.bm.animateLanterns", true),
+    ("bodymotion.holdUpOnlySelf", "text.bm.enable.holdUpOnlySelf", false),
     (
-        "bm.tweakElytraAnimation",
+        "bodymotion.tweakElytraAnimation",
         "text.bm.enable.tweakElytraAnimation",
         true,
     ),
     (
-        "bm.dontHoldItemsInBed",
+        "bodymotion.dontHoldItemsInBed",
         "text.bm.enable.dontholditemsinbed",
         true,
     ),
-    ("bm.sleep", "text.bm.enable.freezearmsinbed", true),
-    ("bm.offhandHiding", "text.bm.enable.offhandhiding", true),
-    ("bm.narutoRunning", "text.bm.enable.narutoRunning", false),
+    ("bodymotion.sleep", "text.bm.enable.freezearmsinbed", true),
+    ("bodymotion.offhandHiding", "text.bm.enable.offhandhiding", true),
+    ("bodymotion.narutoRunning", "text.bm.enable.narutoRunning", false),
     (
-        "bm.huggingAnimation",
+        "bodymotion.huggingAnimation",
         "text.bm.enable.huggingAnimation",
         false,
     ),
     (
-        "bm.fallingAnimation",
+        "bodymotion.fallingAnimation",
         "text.bm.enable.fallingAnimation",
         false,
     ),
     (
-        "bm.enableHorseLegAnimation",
+        "bodymotion.enableHorseLegAnimation",
         "text.bm.enable.enableHorseLegAnimation",
         false,
     ),
@@ -255,7 +255,7 @@ const TOGGLES: [(&str, &str, bool); 28] = [
 /// The sliders: storage key, translation key, min, max, step, default.
 const SLIDERS: [(&str, &str, f64, f64, f64, f64); 8] = [
     (
-        "bm.ladderAnimationAmplifier",
+        "bodymotion.ladderAnimationAmplifier",
         "text.bm.ladderAnimationAmplifier",
         0.1,
         0.5,
@@ -263,7 +263,7 @@ const SLIDERS: [(&str, &str, f64, f64, f64, f64); 8] = [
         0.35,
     ),
     (
-        "bm.ladderAnimationArmHeight",
+        "bodymotion.ladderAnimationArmHeight",
         "text.bm.ladderAnimationArmHeight",
         1.0,
         3.0,
@@ -271,7 +271,7 @@ const SLIDERS: [(&str, &str, f64, f64, f64, f64); 8] = [
         1.7,
     ),
     (
-        "bm.ladderAnimationArmSpeed",
+        "bodymotion.ladderAnimationArmSpeed",
         "text.bm.ladderAnimationArmSpeed",
         1.0,
         4.0,
@@ -279,7 +279,7 @@ const SLIDERS: [(&str, &str, f64, f64, f64, f64); 8] = [
         2.0,
     ),
     (
-        "bm.smoothingSpeed",
+        "bodymotion.smoothingSpeed",
         "text.bm.smoothingSpeed",
         0.1,
         1.0,
@@ -287,7 +287,7 @@ const SLIDERS: [(&str, &str, f64, f64, f64, f64); 8] = [
         0.2,
     ),
     (
-        "bm.maxNormalAngle",
+        "bodymotion.maxNormalAngle",
         "text.bm.maxNormalAngle",
         0.0,
         50.0,
@@ -295,7 +295,7 @@ const SLIDERS: [(&str, &str, f64, f64, f64, f64); 8] = [
         50.0,
     ),
     (
-        "bm.maxBlockingAngle",
+        "bodymotion.maxBlockingAngle",
         "text.bm.maxBlockingAngle",
         0.0,
         50.0,
@@ -303,7 +303,7 @@ const SLIDERS: [(&str, &str, f64, f64, f64, f64); 8] = [
         15.0,
     ),
     (
-        "bm.holdUpItemOffset",
+        "bodymotion.holdUpItemOffset",
         "text.bm.holdUpItemOffset",
         -0.5,
         0.4,
@@ -311,7 +311,7 @@ const SLIDERS: [(&str, &str, f64, f64, f64, f64); 8] = [
         0.0,
     ),
     (
-        "bm.holdUpCameraOffset",
+        "bodymotion.holdUpCameraOffset",
         "text.bm.holdUpCameraOffset",
         -0.3,
         0.6,

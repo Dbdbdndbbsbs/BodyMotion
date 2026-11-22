@@ -156,7 +156,7 @@ fn focus_frame(batch: &mut HudBatch, atlas: &HudAtlas, x: i32, y: i32, w: i32, h
 
 // ---- the screen's parts ----------------------------------------------------------
 
-/// The root panel's fixed size (the original's, slightly larger).
+/// The root panel's fixed size (the mod's, slightly larger).
 const ROOT: (i32, i32) = (440, 352);
 /// Root-relative rectangles.
 const RIBBON: (i32, i32) = (10, 29);
@@ -174,16 +174,16 @@ const ROW_HEIGHT: i32 = 22;
 const CHECKBOX: i32 = 18;
 /// The checkbox's vertical offset inside a 22px row.
 const CHECKBOX_OFFSET: i32 = (ROW_HEIGHT - CHECKBOX) / 2;
-/// A toggle/slider widget's width (10 cells of the original's 18-px grid).
+/// A toggle/slider widget's width (10 cells of the mod's 18-px grid).
 const WIDGET_WIDTH: i32 = 180;
 /// A widget's height (one grid cell).
 const WIDGET_HEIGHT: i32 = 18;
-/// The enum button's width (18 cells with the original's -13 gap).
+/// The enum button's width (18 cells with the mod's -13 gap).
 const CHOICE_WIDTH: i32 = 103;
 /// The slider thumb's width.
 const THUMB_WIDTH: i32 = 8;
 
-/// The Settings tab's rows come from `runtime::row` (the original's order).
+/// The Settings tab's rows come from `runtime::row` (the mod's order).
 
 /// Constants for item tabs: the tab bar height is the same as Settings, but
 /// the content area is different. Item lists have a search field at the bottom
@@ -195,7 +195,7 @@ const ITEM_ROW_STEP: i32 = ROW_STEP;
 const ITEM_ROW_HEIGHT: i32 = ROW_HEIGHT;
 const ITEM_INSETS: (i32, i32) = (4, 4);
 
-/// Tab identifiers: 0 = Settings (original), 1 = Hold Up Items, 2 = Lanterns.
+/// Tab identifiers: 0 = Settings, 1 = Hold Up Items, 2 = Lanterns.
 const TAB_COUNT: usize = 3;
 const TAB_ICONS: [&str; TAB_COUNT] = ["minecraft:filled_map", "minecraft:torch", "minecraft:lantern"];
 
@@ -568,7 +568,7 @@ impl Gui {
         self.tooltip = None;
         self.draw_list(game, batch, mouse, ch);
 
-        // Done and Reset (vanilla buttons, as the original's WButton).
+        // Done and Reset (vanilla buttons, as the mod's WButton).
         let by = self.button_y();
         for (hit, r, key) in [(Hit::Done, DONE, "gui.done"), (Hit::Reset, RESET, "controls.reset")] {
             let focused = self.focus == Some(if hit == Hit::Done { Widget::Done } else { Widget::Reset });
@@ -602,7 +602,7 @@ impl Gui {
         }
     }
 
-    /// Settings tab's scrollbar (the original 12-row list).
+    /// Settings tab's scrollbar (the mod 12-row list).
     fn draw_scroll_bar(&self, batch: &mut HudBatch, atlas: &HudAtlas, mouse: (i32, i32), ch: i32) {
         if !self.needs_scroll(ch) {
             return;
@@ -647,7 +647,7 @@ impl Gui {
         let atlas = &game.gui.atlas;
         let (ox, oy) = self.origin;
         let [cx, cy, cw, _] = CARD;
-        // Settings tab: the original 12-row toggle list.
+        // Settings tab: the mod 12-row toggle list.
         if self.item_tab == 0 {
             self.scrollbar_value = self.scrollbar_value.clamp(0, self.max_scroll(ch));
             self.draw_scroll_bar(batch, atlas, mouse, ch);
@@ -900,7 +900,7 @@ impl Gui {
         );
     }
 
-    /// Every item the game's registry knows, sorted by id (the original's
+    /// Every item the game's registry knows, sorted by id (the mod's
     /// `createItemTab`), for either item tab.
     fn tab_items(&self, game: &Game<'_>) -> Vec<String> {
         let mut items = game.ui.registries.items.clone();

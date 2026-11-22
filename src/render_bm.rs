@@ -1,8 +1,8 @@
-// the original mod's MapAnimation: the pose of a filled map in a player's third-person hand,
-// from the original `MapAnimation.applyAnimation` and
+// the mod's MapAnimation: the pose of a filled map in a player's third-person hand,
+// from the mod `MapAnimation.applyAnimation` and
 // `MapRenderer.renderFirstPersonMap`. `hand` is `held_item_transform`'s matrix
 // (the arm, then `ItemInHandLayer`'s offset), which this undoes to rebuild
-// the original mod's `translateToHand` chain.
+// the mod's `translateToHand` chain.
 use glam::{Mat4, Vec3};
 
 /// `MapAnimation.applyAnimation` for one arm, then
@@ -16,7 +16,7 @@ pub fn held_map_matrix(hand: Mat4, left: bool, main_hand: bool, off_hand_empty: 
         * Mat4::from_rotation_y(deg(-180.0))
         * Mat4::from_rotation_x(deg(90.0));
     let (outer, inner) = if main_hand && off_hand_empty {
-        // Two-handed (one map, empty off hand): the original mod's main-hand outer chain
+        // Two-handed (one map, empty off hand): the mod's main-hand outer chain
         // and the large inner variants 2/3, the pose confirmed level.
         (
             Mat4::from_rotation_x(deg(-90.0))
@@ -38,7 +38,7 @@ pub fn held_map_matrix(hand: Mat4, left: bool, main_hand: bool, off_hand_empty: 
             },
         )
     } else if left {
-        // Left hand: the original mod's small variant 1. The outer chain is the same in
+        // Left hand: the mod's small variant 1. The outer chain is the same in
         // both hands, so distance and size match.
         (
             Mat4::from_rotation_x(deg(-90.0))

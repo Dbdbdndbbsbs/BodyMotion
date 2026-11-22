@@ -1,4 +1,4 @@
-// the original mod's animation half, inserted into `game/client_ambient.rs`: the settings
+// the mod's animation half, inserted into `game/client_ambient.rs`: the settings
 // and the ported animations. The frame hook captures each player's state (`BmState`)
 // and hands it to the model as its `BodyPose`; the game applies it right after the
 // vanilla `humanoid` pose.
@@ -9,7 +9,7 @@ use horizon_core::use_animation::UseAnimation;
 use std::cell::{Cell, RefCell};
 use std::sync::Arc;
 
-/// `RotationLock` (the original's enum). Defined here rather than in the
+/// `RotationLock` (the mod's enum). Defined here rather than in the
 /// settings module: this file is shared with the library crate, which has no
 /// `game` module.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -19,7 +19,7 @@ pub enum RotationLock {
     Smooth,
 }
 
-/// `HoldUpModes` (the original's enum).
+/// `HoldUpModes` (the mod's enum).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum HoldUpMode {
     Config,
@@ -28,21 +28,21 @@ pub enum HoldUpMode {
     ConfigInverted,
 }
 
-/// `HoldUpTarget` (the original's enum).
+/// `HoldUpTarget` (the mod's enum).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum HoldUpTarget {
     None,
     Camera,
 }
 
-/// `BowAnimation` (the original's enum).
+/// `BowAnimation` (the mod's enum).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum BowAnimation {
     Vanilla,
     CustomV1,
 }
 
-/// the original mod's settings, switched each frame from the mod's settings.
+/// the mod's settings, switched each frame from the mod's settings.
 #[derive(Clone, Copy, Debug)]
 pub struct BmSettings {
     pub master: bool,
@@ -135,30 +135,30 @@ impl Default for BmSettings {
 }
 thread_local! {
     static BM: Cell<BmSettings> = const { Cell::new(BmSettings::DEFAULT) };
-    /// the original mod's FreezingAnimation: the local player's box touches powder snow
+    /// the mod's FreezingAnimation: the local player's box touches powder snow
     /// (computed by the frame hook).
     static POWDER_SNOW: Cell<bool> = const { Cell::new(false) };
-    /// the original mod's BurningAnimation: the local player's remaining fire ticks (the
+    /// the mod's BurningAnimation: the local player's remaining fire ticks (the
     /// model's own `fire_ticks` is only synced for remote players).
     static FIRE_TICKS: Cell<i32> = const { Cell::new(0) };
-    /// the original mod's LadderAnimation: the local player is on a climbable block that is
+    /// the mod's LadderAnimation: the local player is on a climbable block that is
     /// a ladder or trapdoor (computed by the frame hook).
     static CLIMBING: Cell<bool> = const { Cell::new(false) };
-    /// the original mod's LadderAnimation: the body yaw (radians) that faces the ladder,
+    /// the mod's LadderAnimation: the body yaw (radians) that faces the ladder,
     /// read from the ladder block's `facing` by the frame hook.
     static LADDER_FACE: Cell<f32> = const { Cell::new(0.0) };
-    /// the original mod's LadderAnimation: the climbable block has a `facing` (ladder or
+    /// the mod's LadderAnimation: the climbable block has a `facing` (ladder or
     /// trapdoor), so the body is locked and the head is clamped to it.
     static LADDER_LOCK: Cell<bool> = const { Cell::new(false) };
-    /// the original mod's BurningAnimation: the local player is on fire without fire
+    /// the mod's BurningAnimation: the local player is on fire without fire
     /// resistance (computed by the frame hook).
     static BURNING: Cell<bool> = const { Cell::new(false) };
-    /// the original mod's FreezingAnimation: the local player is freezing in powder snow
+    /// the mod's FreezingAnimation: the local player is freezing in powder snow
     /// (computed by the frame hook).
     static FREEZING: Cell<bool> = const { Cell::new(false) };
-    /// the original mod's ItemSwapAnimation: the model age when the hands last traded items.
+    /// the mod's ItemSwapAnimation: the model age when the hands last traded items.
     static SWAP_AT: Cell<f32> = const { Cell::new(0.0) };
-    /// the original mod's BoatAnimation: riding a boat, and each paddle's state and time.
+    /// the mod's BoatAnimation: riding a boat, and each paddle's state and time.
     static BOAT: Cell<(bool, [bool; 2], [f32; 2])> =
         const { Cell::new((false, [false; 2], [0.0; 2])) };
     /// The hands the frame hook saw last, to spot a trade.
@@ -318,7 +318,14 @@ pub fn horse_pump() -> f32 {
 pub fn set_holding_list(list: Vec<String>) {
     HOLDING_LIST.with(|c| *c.borrow_mut() = list);
 }
-/// Forget the local player's frame state (left the world).
+/// Forget per-mob state for entities that left the world this frame.
+pub fn prune_stale(alive: &crate::fast_hash::FxHashSet<u32>) {
+    FALL_MAP.with(|c| c.borrow_mut().retain(|id, _| alive.contains(id)));
+    ROT_TICK.with(|c| c.borrow_mut().retain(|id, _| alive.contains(id)));
+    SMOOTH.with(|c| c.borrow_mut().retain(|id, _| alive.contains(id)));
+}
+
+/// Forget every per-mob state (left the world).
 pub fn reset_animation_state() {
     SWAP_AT.with(|c| c.set(0.0));
     BOAT.with(|c| c.set((false, [false; 2], [0.0; 2])));
@@ -334,7 +341,7 @@ pub fn reset_animation_state() {
     OFF_CHARGE_MAX.with(|c| c.set(25.0));
     SMOOTH.with(|c| c.borrow_mut().clear());
 }
-/// the original mod's BoatAnimation: the boat the local player rides, and each paddle's
+/// the mod's BoatAnimation: the boat the local player rides, and each paddle's
 /// state and time (`AbstractBoat.rowingTimeLeft/Right`).
 pub fn update_boat(boat: Option<([bool; 2], [f32; 2])>) {
     BOAT.with(|c| c.set(match boat {
@@ -351,7 +358,7 @@ fn rowing_time(paddling: bool, paddle: f32, partial: f32) -> f32 {
         0.0
     }
 }
-/// the original mod's ItemSwapAnimation: notice the hands trading their items, and remember
+/// the mod's ItemSwapAnimation: notice the hands trading their items, and remember
 /// the age it happened at.
 pub fn update_hands(age: f32, main: Option<Arc<str>>, off: Option<Arc<str>>) {
     HANDS.with(|h| {
@@ -642,7 +649,7 @@ impl BmState {
             || (m.extra.using_item > 0
                 && matches!(using_hand, Some("minecraft:spyglass") | Some("minecraft:trident")));
         // FallingAnimation: the local player's trigger and speed come from the
-        // frame hook; remote players use the original's y-distance heuristic.
+        // frame hook; remote players use the mod's y-distance heuristic.
         let mut falling = false;
         let mut fall_speed = 0.0;
         if is_player {
@@ -662,7 +669,7 @@ impl BmState {
                         fall_speed = data.1;
                     } else {
                         // The drop since the last sample, per tick: a sample can
-                        // span several ticks on a laggy server, and the original's
+                        // span several ticks on a laggy server, and the mod's
                         // 3.5 factor and 0.5 threshold assume per-tick deltas.
                         let dropped = (data.0 - m.position.y as f64) as f32
                             / m.age.saturating_sub(data.2).max(1) as f32;
@@ -913,7 +920,7 @@ pub fn apply_all(p: &mut Poses, st: &BmState) {
         return;
     }
     // `maxNormalAngle` / `maxBlockingAngle`: vanilla's head limit relative to
-    // the body (the original mixin on `getMaxHeadRotationRelativeToBody`).
+    // the body (the mod mixin on `getMaxHeadRotationRelativeToBody`).
     let angles = bm();
     let limit = if st.blocking {
         angles.max_blocking_angle
@@ -925,7 +932,7 @@ pub fn apply_all(p: &mut Poses, st: &BmState) {
         p.yrot("head", st.head_yaw.clamp(-limit, limit));
     }
     // Lowest priority first: a later animation overwrites the arms it owns,
-    // as the original's priority order does (Map/Hold Up 300, Crawling 350,
+    // as the mod's priority order does (Map/Hold Up 300, Crawling 350,
     // Falling/Burning/Freezing 400, Naruto 500, Ladder 1000, Boat/Horse 1500,
     // Hug/Pet 2100, Eat/Drink 2500, Elytra 3000, guards 3100, Clamp/Custom
     // Bow 3200, Item Swap 3500). Eat/Drink is applied after Elytra and Item
@@ -962,9 +969,9 @@ pub fn apply_all(p: &mut Poses, st: &BmState) {
     apply_smoothing(p, st);
 }
 
-/// the original mod's MapHoldingAnimation (priority 300): the arms hold the map in front,
+/// the mod's MapHoldingAnimation (priority 300): the arms hold the map in front,
 /// both hands when the off hand is empty, otherwise only the hand with the
-/// map. The original's pitch-driven formulas.
+/// map. the mod's pitch-driven formulas.
 fn apply_map_holding(p: &mut Poses, st: &BmState) {
     if !bm_on(bm().maps) {
         return;
@@ -979,7 +986,7 @@ fn apply_map_holding(p: &mut Poses, st: &BmState) {
     // `EntityUtil.getXRot` is the head pitch in degrees.
     let t = (90.0 - st.pitch) / 180.0;
     let lerp = |a: f32, from: f32, to: f32| from + a * (to - from);
-    // The original's pitch-driven formulas swing the arms (and the maps in
+    // the mod's pitch-driven formulas swing the arms (and the maps in
     // them) as the head tilts, so two maps converge and diverge when looking
     // up and down. Pin the pose to level gaze (t = 0.5): the map stays fixed
     // in the hands no matter the head angle.
@@ -998,7 +1005,7 @@ fn apply_map_holding(p: &mut Poses, st: &BmState) {
         arm(p, true);
         arm(p, false);
     } else if both_maps {
-        // A map in each hand: the original only poses the main arm, leaving
+        // A map in each hand: the mod only poses the main arm, leaving
         // the off-hand map floating. Pose both arms with the one-handed
         // formula so each hand holds its own map.
         arm(p, true);
@@ -1011,9 +1018,9 @@ fn apply_map_holding(p: &mut Poses, st: &BmState) {
     }
 }
 
-/// the original mod's LookAtItemAnimation (priority 300): the arms hold their hand's item up
+/// the mod's LookAtItemAnimation (priority 300): the arms hold their hand's item up
 /// to the face (the CONFIG/ALL/CONFIG_INVERTED modes) or level to the camera
-/// (`HoldUpTarget`), with the original's offsets. An arm busy with a swing
+/// (`HoldUpTarget`), with the mod's offsets. An arm busy with a swing
 /// keeps its vanilla pose.
 fn apply_hold_up(p: &mut Poses, st: &BmState) {
     let n = bm();
@@ -1086,7 +1093,7 @@ fn apply_hold_up(p: &mut Poses, st: &BmState) {
     }
 }
 
-/// the original mod's EatDrinkAnimation (priority 2500): the using arm lifts to the mouth
+/// the mod's EatDrinkAnimation (priority 2500): the using arm lifts to the mouth
 /// and chews. The classic port formula.
 fn apply_eat_drink(p: &mut Poses, st: &BmState) {
     // Only real food and drink use this pose; any other item in use (a spear,
@@ -1130,11 +1137,8 @@ fn apply_eat_drink(p: &mut Poses, st: &BmState) {
     );
 }
 
-/// LadderAnimation (priority 1000): the ladder animation. Arms
-/// hang at -1.7, legs bend at -1.0 so the feet rest on the rungs; all parts
-/// swing with `cos(worldY * 2) * 0.35`, left limbs mirror yaw/z. The frame
-/// hook locks the body to the ladder's `facing`; the head turns with the
-/// camera, clamped to ±90° of the body.
+/// Ladder climb pose: reaching up hand over hand, knees tucked onto the rungs.
+/// The sway runs on a sine of the climb phase; left and right limbs mirror.
 fn apply_ladder(p: &mut Poses, st: &BmState) {
     let n = bm();
     // The Passenger guard (3500): riding anything but a boat, the vanilla
@@ -1142,25 +1146,24 @@ fn apply_ladder(p: &mut Poses, st: &BmState) {
     if !n.master || !n.ladder || !st.climbing || (st.passenger && !st.boat) {
         return;
     }
-    // `-cos(worldY * ladderAnimationArmSpeed) * ladderAnimationAmplifier`.
-    let rotation = -(st.y * n.ladder_arm_speed).cos() * n.ladder_amplifier;
-    let height = n.ladder_arm_height;
-    // Right arm.
-    p.xrot("right_arm", -height - rotation);
-    p.yrot("right_arm", -0.2);
-    p.zrot("right_arm", 0.3);
-    // Left arm (mirrored yaw/z).
-    p.xrot("left_arm", -height + rotation);
-    p.yrot("left_arm", 0.2);
-    p.zrot("left_arm", -0.3);
-    // Right leg: bent, feet resting on the rungs.
-    p.xrot("right_leg", -1.0 - rotation);
-    p.yrot("right_leg", -0.2);
-    p.zrot("right_leg", 0.3);
-    // Left leg (mirrored yaw/z).
-    p.xrot("left_leg", -1.0 + rotation);
-    p.yrot("left_leg", 0.2);
-    p.zrot("left_leg", -0.3);
+    let sway = (st.y * n.ladder_arm_speed * 2.0).sin() * n.ladder_amplifier;
+    let base = n.ladder_arm_height;
+    // Right arm pulls up while the left reaches down, then they swap.
+    let r = sway * 0.5;
+    p.xrot("right_arm", -base - r);
+    p.yrot("right_arm", -0.12);
+    p.zrot("right_arm", 0.22);
+    p.xrot("left_arm", -base + r);
+    p.yrot("left_arm", 0.12);
+    p.zrot("left_arm", -0.22);
+    // Both knees stay lifted; the hips sway slightly with the arms.
+    let leg_r = sway * 0.35;
+    p.xrot("right_leg", -0.95 - leg_r);
+    p.yrot("right_leg", -0.12);
+    p.zrot("right_leg", 0.22);
+    p.xrot("left_leg", -0.95 + leg_r);
+    p.yrot("left_leg", 0.12);
+    p.zrot("left_leg", -0.22);
     // The body's world yaw is locked to the ladder by the frame hook. The
     // head follows the camera relative to that body, clamped to +-90 degrees
     // so a backwards climb turns the head sideways instead of spinning it.
@@ -1173,7 +1176,7 @@ fn apply_ladder(p: &mut Poses, st: &BmState) {
     }
 }
 
-/// the original mod's BoatAnimation (priority 1000): each oar sweeps with its own rowing
+/// the mod's BoatAnimation (priority 1000): each oar sweeps with its own rowing
 /// time; idle holds the arms still.
 fn apply_boat(p: &mut Poses, st: &BmState) {
     if !bm_on(bm().boat) || !st.boat {
@@ -1188,7 +1191,7 @@ fn apply_boat(p: &mut Poses, st: &BmState) {
     p.zrot("left_arm", -0.3);
 }
 
-/// the original mod's HorseAnimation (priority 1500): riding a saddled horse-family mount,
+/// the mod's HorseAnimation (priority 1500): riding a saddled horse-family mount,
 /// the arms reach for the reins, and with `enableHorseLegAnimation` the legs
 /// spread out around the horse's flanks. The seat is assumed the first
 /// (index 0).
@@ -1202,7 +1205,7 @@ fn apply_horse(p: &mut Poses, st: &BmState) {
     // in the horse's step pace.
     let pump = if st.horse_standing { 0.0 } else { horse_pump() };
     let phase = st.horse_walk * 0.35;
-    // Big amplitude at the original pace: the limbs travel far, not fast.
+    // Big amplitude at the mod pace: the limbs travel far, not fast.
     let swing = phase.msin() * pump * 0.7;
     // The torso keeps its straight seat (no lean).
     // Sitting in the saddle: the rider stays centered on the mount (no slide).
@@ -1242,7 +1245,7 @@ fn apply_horse(p: &mut Poses, st: &BmState) {
     }
 }
 
-/// the original mod's HugAnimation (priority 2100): crouching face to face with another
+/// the mod's HugAnimation (priority 2100): crouching face to face with another
 /// crouching player, the arms reach out (the local player's raycast).
 fn apply_hug(p: &mut Poses, st: &BmState) {
     if !bm_on(bm().hug) || !st.hug {
@@ -1262,7 +1265,7 @@ thread_local! {
     static PET_AIM: RefCell<[f32; 2]> = RefCell::new([0.0, -1.2]);
 }
 
-/// the original mod's PetAnimation (priority 2100): crouching to a wolf or cat in view, the
+/// the mod's PetAnimation (priority 2100): crouching to a wolf or cat in view, the
 /// main hand strokes it. The heart event is not portable (no entity-event
 /// API). With a target (the local player), the arm reaches for the animal's
 /// center, so it follows it as it moves; without one (a remote player) the
@@ -1306,7 +1309,7 @@ fn apply_pet(p: &mut Poses, st: &BmState) {
     p.zrot(name, if right { 0.3 + wave } else { -(0.3 + wave) });
 }
 
-/// the original mod's ElytraAnimation (priority 3000): gliding spreads the limbs, the idle
+/// the mod's ElytraAnimation (priority 3000): gliding spreads the limbs, the idle
 /// wobble shrinking with the speed. `fly_k` is the speed scale from the
 /// velocity.
 fn apply_elytra(p: &mut Poses, st: &BmState) {
@@ -1406,7 +1409,7 @@ fn apply_offhand_two_handed(p: &mut Poses, st: &BmState) {
     bob(p, "left_arm", st.age, -1.0);
 }
 
-/// the original mod's ClampCrossbowAnimations (priority 3200): the crossbow poses' arms
+/// the mod's ClampCrossbowAnimations (priority 3200): the crossbow poses' arms
 /// never swing past the shoulder or up behind the head.
 fn apply_clamp_crossbow(p: &mut Poses, st: &BmState) {
     if !bm_on(bm().clamp_crossbow) || !(st.crossbow_charge || st.crossbow_hold) {
@@ -1421,7 +1424,7 @@ fn apply_clamp_crossbow(p: &mut Poses, st: &BmState) {
     }
 }
 
-/// the original mod's CustomBowAnimation (priority 3200, `bowAnimation` = CUSTOM_V1): the
+/// the mod's CustomBowAnimation (priority 3200, `bowAnimation` = CUSTOM_V1): the
 /// custom draw pose, the arms track the aim.
 fn apply_custom_bow(p: &mut Poses, st: &BmState) {
     let n = bm();
@@ -1446,7 +1449,7 @@ fn apply_custom_bow(p: &mut Poses, st: &BmState) {
     p.zrot(off, off_z + invert * 1.5);
 }
 
-/// the original mod's CrawlingAnimation (priority 350): the swimming pose on land crawls.
+/// the mod's CrawlingAnimation (priority 350): the swimming pose on land crawls.
 fn apply_crawling(p: &mut Poses, st: &BmState) {
     if !bm_on(bm().crawling) || st.swim_in_water {
         return;
@@ -1530,35 +1533,33 @@ fn apply_crawling(p: &mut Poses, st: &BmState) {
     p.zrot("right_leg", 0.150_796_4);
 }
 
-/// the original mod's FallingAnimation (priority 400): free fall spreads the limbs, faster
-/// the quicker the fall. `falling_speed` is `|velocity|²/11` (the local
-/// player) or the y-distance heuristic (remote players).
+/// Free-fall pose: the arms lift out to the sides and windmill slowly; the
+/// legs trail slightly apart. The spread grows with fall speed.
 fn apply_falling(p: &mut Poses, st: &BmState) {
     if !bm_on(bm().falling) || !st.falling {
         return;
     }
-    let move_sqrt = st.fall_speed.min(1.0);
-    let arms_move = (st.fall_speed * 2.0).min(1.0);
-    let arms_out = 1.9 * arms_move;
-    let legs_out = 0.6 * move_sqrt;
-    let movement = st.age;
-    p.xrot("left_arm", (movement * 0.666_2).mcos() * move_sqrt);
-    p.zrot("left_arm", -arms_out);
-    p.xrot(
-        "right_arm",
-        (movement * 0.666_2 + std::f32::consts::PI).mcos() * move_sqrt,
-    );
-    p.zrot("right_arm", arms_out);
+    let speed = st.fall_speed.min(1.0);
+    let spread = (st.fall_speed * 1.6).min(1.0);
+    let phase = st.age * 0.7;
+    let swing = phase.mcos() * speed * 0.8;
+    p.xrot("left_arm", swing);
+    p.zrot("left_arm", -(0.5 + 1.1 * spread));
+    p.xrot("right_arm", (phase + std::f32::consts::PI).mcos() * speed * 0.8);
+    p.zrot("right_arm", 0.5 + 1.1 * spread);
     p.xrot(
         "left_leg",
-        (movement * 0.666_2 + std::f32::consts::PI).mcos() * 1.4 * move_sqrt,
+        (phase + std::f32::consts::PI * 0.75).mcos() * speed * 0.9,
     );
-    p.zrot("left_leg", -legs_out);
-    p.xrot("right_leg", (movement * 0.666_2).mcos() * 1.4 * move_sqrt);
-    p.zrot("right_leg", legs_out);
+    p.zrot("left_leg", -(0.25 + 0.45 * spread));
+    p.xrot(
+        "right_leg",
+        (phase + std::f32::consts::PI * 0.25).mcos() * speed * 0.9,
+    );
+    p.zrot("right_leg", 0.25 + 0.45 * spread);
 }
 
-/// the original mod's NarutoRunningAnimation (priority 500): sprinting sweeps both arms
+/// the mod's NarutoRunningAnimation (priority 500): sprinting sweeps both arms
 /// back, unless one is swinging.
 fn apply_naruto(p: &mut Poses, st: &BmState) {
     if !bm_on(bm().naruto) || !st.sprinting {
@@ -1583,7 +1584,7 @@ fn apply_naruto(p: &mut Poses, st: &BmState) {
     }
 }
 
-/// the original mod's ItemSwapAnimation (priority 3500): the arms cross as the hands trade
+/// the mod's ItemSwapAnimation (priority 3500): the arms cross as the hands trade
 /// their items and unroll over 10 ticks.
 fn apply_item_swap(p: &mut Poses, st: &BmState) {
     if !bm_on(bm().item_swap) || st.swap_at <= 0.0 {
@@ -1602,7 +1603,7 @@ fn apply_item_swap(p: &mut Poses, st: &BmState) {
     p.zrot("left_arm", -roll);
 }
 
-/// the original mod's BurningAnimation (priority 400): the head wobbles and the free arms
+/// the mod's BurningAnimation (priority 400): the head wobbles and the free arms
 /// flail.
 fn apply_burning(p: &mut Poses, st: &BmState) {
     if !bm_on(bm().burning) || !st.burning {
@@ -1622,7 +1623,7 @@ fn apply_burning(p: &mut Poses, st: &BmState) {
     });
 }
 
-/// the original mod's FreezingAnimation (priority 400): in powder snow without Fire
+/// the mod's FreezingAnimation (priority 400): in powder snow without Fire
 /// Resistance, the arms shake with a smooth random-ish roll per frame.
 fn apply_freezing(p: &mut Poses, st: &BmState) {
     if !bm_on(bm().freezing) || !st.freezing {
@@ -1648,7 +1649,7 @@ fn apply_freezing(p: &mut Poses, st: &BmState) {
     });
 }
 
-/// the original mod's SleepAnimation (`freezeArmsInBed`): both arms lie still in the bed.
+/// the mod's SleepAnimation (`freezeArmsInBed`): both arms lie still in the bed.
 fn apply_sleep(p: &mut Poses, st: &BmState) {
     if !bm_on(bm().sleep) || !st.sleep_pose {
         return;
@@ -1698,7 +1699,7 @@ fn bm_flail(
     }
 }
 
-/// the original mod's AnimationSmoothing (`enableAnimationSmoothing`): the original's
+/// the mod's AnimationSmoothing (`enableAnimationSmoothing`): the mod's
 /// `PlayerTransformer.interpolate`, ported per mob. A new tick moves the
 /// target 20%-ish toward the freshly animated pose (the configurable speed);
 /// every render interpolates from the last rendered pose to that target by

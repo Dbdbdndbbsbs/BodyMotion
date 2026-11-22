@@ -1,10 +1,12 @@
 NOTICE
 
-Body Motion is an independently developed native mod for Horizon. Its
-animation concept was inspired by Not Enough Animations
+Body Motion is an independent native mod for Horizon. Its animation concept
+was inspired by Not Enough Animations
 (https://github.com/tr7zw/NotEnoughAnimations, Copyright (c) tr7zw, 2021).
-No source code, translation files or other assets from that mod are included
-here. The in-game strings in `data/lang/*.json` were written for this mod.
+The animations here are a fresh implementation written for this mod: the
+poses, curves and constants are original. No source code, translation files
+or other assets from Not Enough Animations are included. The in-game strings
+in `assets/bodymotion/lang/*.json` were written for this mod.
 
 This file is provenance only. The license for everything in this repository
 is the MIT-style license in LICENSE.

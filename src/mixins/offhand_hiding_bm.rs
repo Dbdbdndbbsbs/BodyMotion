@@ -1,4 +1,4 @@
-// The original mod's OffhandHidingAnimation: while the main hand holds a bow or
+// the mod's OffhandHidingAnimation: while the main hand holds a bow or
 // crossbow (not a shield), the off hand's item is hidden; a charged crossbow
 // hides even when idle, a bow only while drawing. Mirrored for a bow in the
 // off hand. A bow paired with a crossbow hides too, as the crossbow's own
@@ -60,7 +60,7 @@ fn bm_update_offhand_hiding(
     let main_is_crossbow = &*main_item == "minecraft:crossbow";
     let off_is_crossbow = off_item.as_deref() == Some("minecraft:crossbow");
     if main_is_bow && off_is_bow {
-        // the original mod keeps a bow in each hand visible, but a crossbow still hides
+        // the mod keeps a bow in each hand visible, but a crossbow still hides
         // the other hand's bow while it is charged or drawn.
         if main_is_crossbow && !off_is_crossbow && (main_charged || using_main) {
             glue::set_hide_offhand(true);

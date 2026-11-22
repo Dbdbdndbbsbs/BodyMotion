@@ -1,7 +1,7 @@
-// the original mod's MapRendering: `map_rect` looks up a warmed map's atlas rect
+// the mod's MapRendering: `map_rect` looks up a warmed map's atlas rect
 // (the entity pass cannot upload); `map_quads` draws the map texture and its
 // vanilla decorations at an already-computed pose. `map_paper_quads` draws
-// just the paper for an empty map, as vanilla and the original mod show it.
+// just the paper for an empty map, as vanilla and the mod show it.
 use crate::game::Game;
 use crate::game::maps::{shown_on_frame, decoration_pose};
 use crate::hud::Rect;
@@ -20,6 +20,11 @@ thread_local! {
 /// Remember the rect `map_texture` returned for `id`.
 pub(crate) fn remember_rect(id: i32, rect: Rect) {
     MAP_RECTS.with(|m| m.borrow_mut().insert(id, rect));
+}
+
+/// Drop last frame's rects: the warm pass refills them each frame.
+pub(crate) fn clear_frame() {
+    MAP_RECTS.with(|m| m.borrow_mut().clear());
 }
 
 /// One quad of a map face, at `z` under the pose `m`.
@@ -130,7 +135,7 @@ pub(crate) fn map_quads(
     light: u32,
     out: &mut Vec<Vertex>,
 ) {
-    // the original mod `MapRenderer.renderFirstPersonMap`: a map with data shows its
+    // the mod `MapRenderer.renderFirstPersonMap`: a map with data shows its
     // texture over the checkerboard; one without is just paper.
     let has_data = game.maps.data.contains_key(&id);
     if has_data {

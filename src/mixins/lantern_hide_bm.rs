@@ -1,4 +1,4 @@
-// the original mod's LanternAnimation: a lantern held in a player's (or mannequin's)
+// the mod's LanternAnimation: a lantern held in a player's (or mannequin's)
 // third-person hand is drawn by `bm_held_lantern`, so the
 // item model resolver returns an empty state for it and the flat item model
 // is not drawn.

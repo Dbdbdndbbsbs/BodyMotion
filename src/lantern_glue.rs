@@ -1,4 +1,4 @@
-// the original mod's LanternAnimation: the per-entity spring state of a held lantern. The
+// the mod's LanternAnimation: the per-entity spring state of a held lantern. The
 // lantern hangs from a pivot above the hand and chases it (`HeldItemState`):
 // stiffness 0.15, damping 0.95, one full physics tick per game tick, snapped
 // when it is more than 10 blocks from the hand.
@@ -27,6 +27,11 @@ thread_local! {
 /// Forget every lantern (left the world).
 pub fn reset() {
     LANTERNS.with(|c| c.borrow_mut().clear());
+}
+
+/// Forget lanterns held by entities that left the world this frame.
+pub fn prune_stale(alive: &crate::fast_hash::FxHashSet<u32>) {
+    LANTERNS.with(|c| c.borrow_mut().retain(|id, _| alive.contains(id)));
 }
 
 /// `LanternAnimation.updateData` plus the swing's lerped velocity. `hand` is

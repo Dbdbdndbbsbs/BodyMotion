@@ -4,12 +4,10 @@ version = 4
 
 [[package]]
 name = "bodymotion"
-version = "0.2.82"
+version = "0.3.1"
 dependencies = [
  "itoa",
  "serde_json",
- "syn",
- "unicode-ident",
 ]
 
 [[package]]

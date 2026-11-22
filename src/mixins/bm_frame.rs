@@ -91,12 +91,12 @@ fn bm_frame(game: &mut crate::game::Game<'_>) {
         return;
     };
 
-    // the original mod's LadderAnimation: onClimbable && !onGround && lastClimbable is a
+    // the mod's LadderAnimation: onClimbable && !onGround && lastClimbable is a
     // ladder or trapdoor. `last_climbable` is set only when the player is on
     // a climbable block, so its presence stands in for `climbable()`.
     // `PlayerMotion.on_climbable` is the client's own `onClimbable()` result
     // for this tick; not on the ground, it means the player is climbing
-    // (matching the original's `onClimbable() && !onGround`).
+    // (matching the mod's `onClimbable() && !onGround`).
     let climbing = p.on_climbable && !p.ground.on_ground;
     // The body locks to the ladder's own block: its `facing` points away from
     // the wall, so the player faces the opposite way. `last_climbable` is the
@@ -136,22 +136,22 @@ fn bm_frame(game: &mut crate::game::Game<'_>) {
         }
     }
 
-    // the original mod's FreezingAnimation: in powder snow and able to freeze.
+    // the mod's FreezingAnimation: in powder snow and able to freeze.
     let freezing = p.in_powder_snow && p.can_freeze();
     anim::set_freezing(freezing);
 
-    // the original mod's BurningAnimation: on fire without fire resistance.
+    // the mod's BurningAnimation: on fire without fire resistance.
     let burning = p.fire_ticks > 0 && !p.status.fire_resistance;
     anim::set_burning(burning);
 
-    // the original mod's FreezingAnimation: the local player stands in powder snow (the
+    // the mod's FreezingAnimation: the local player stands in powder snow (the
     // game already tracks it on `PlayerMotion`). BurningAnimation reads the
     // local player's remaining fire ticks, since the model's own field is
     // only synced for remote players.
     anim::set_powder_snow(p.in_powder_snow);
     anim::set_fire_ticks(p.fire_ticks);
 
-    // the original mod's ItemSwapAnimation: the hands traded since the last frame.
+    // the mod's ItemSwapAnimation: the hands traded since the last frame.
     let main = game.inventory[game.selected]
         .as_ref()
         .map(|s| s.item.clone());
@@ -159,7 +159,7 @@ fn bm_frame(game: &mut crate::game::Game<'_>) {
     let age = game.player_model.as_ref().map_or(0, |m| m.age);
     anim::update_hands(age as f32, main, off);
 
-    // the original mod's BoatAnimation: the boat the local player rides, and its paddles.
+    // the mod's BoatAnimation: the boat the local player rides, and its paddles.
     let boat = game
         .riding
         .and_then(|id| game.boats.iter().find(|b| b.id == id))
@@ -185,10 +185,9 @@ fn bm_frame(game: &mut crate::game::Game<'_>) {
     });
     anim::set_offhand_crossbow(off_charged, off_charge_max);
 
-    // the original mod's FallingAnimation: free fall, not gliding, climbing, flying (creative
+    // the mod's FallingAnimation: free fall, not gliding, climbing, flying (creative
     // or spectator) or swimming; the speed is |velocity|²/11 and the trigger
-    // needs more than 4 blocks of fall distance (our threshold: the original
-    // used 3).
+    // needs more than 4 blocks of fall distance (our threshold: the mod     // used 3).
     let falling_ok = !p.fall_flying
         && !p.ground.on_ground
         && !climbing
@@ -198,9 +197,9 @@ fn bm_frame(game: &mut crate::game::Game<'_>) {
     let fall_speed = if falling_ok { p.velocity.length_squared() as f32 / 11.0 } else { 0.0 };
     anim::set_local_falling(falling_ok && p.fall_distance > 4.0, fall_speed);
 
-    // the original mod's HorseAnimation: the mob ids riding a horse-family mount.
+    // the mod's HorseAnimation: the mob ids riding a horse-family mount.
     //
-    // The original checks the mount is saddled (`AbstractHorse.isSaddled`),
+    // the mod checks the mount is saddled (`AbstractHorse.isSaddled`),
     // but riding is only possible on a saddled mount anyway, and the flag is
     // not always synced to the client's mob list yet.
     let is_horse = |m: &horizon_client_lib::mobs::Mob| {
@@ -256,10 +255,10 @@ fn bm_frame(game: &mut crate::game::Game<'_>) {
         anim::set_horse_pump(0.0);
     }
 
-    // the original mod's HugAnimation / PetAnimation: the local player crouches with another
+    // the mod's HugAnimation / PetAnimation: the local player crouches with another
     // crouching player (hug) or a wolf or cat (pet) in front of the eyes, on
     // about the same height. A ray along the view vector stands in for the
-    // original's entity hit test.
+    // vanilla's entity hit test.
     let mut hug = false;
     let mut pet = false;
     let mut pet_target: Option<[f32; 3]> = None;
@@ -366,4 +365,16 @@ fn bm_frame(game: &mut crate::game::Game<'_>) {
     for m in game.mobs.iter_mut() {
         anim::set_emote(m, alpha);
     }
+
+    // Forget per-mob animation state for entities that left the world this
+    // frame (fall data, rotation ticks, smoothing, lantern springs).
+    let mut alive = crate::fast_hash::FxHashSet::default();
+    if let Some(m) = game.player_model.as_ref() {
+        alive.insert(m.id);
+    }
+    for m in &game.mobs {
+        alive.insert(m.id);
+    }
+    anim::prune_stale(&alive);
+    crate::game::native_bm_lantern::prune_stale(&alive);
 }

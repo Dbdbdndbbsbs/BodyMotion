@@ -1,4 +1,4 @@
-// Suppresses the vanilla render of a hand's item when the original mod's
+// Suppresses the vanilla render of a hand's item when the mod's
 // OffhandHidingAnimation says it hides: the off hand's item while the main
 // hand holds a bow or crossbow (mirrored for the main hand). A shield is never
 // hidden.

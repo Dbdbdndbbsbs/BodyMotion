@@ -1,4 +1,4 @@
-// the original mod's LanternAnimation: draws a lantern held in a player's (or mannequin's)
+// the mod's LanternAnimation: draws a lantern held in a player's (or mannequin's)
 // third-person hand as its block model, hanging from a pivot above the hand
 // and swinging with the player's movement. `lantern_hide_bm.rs` makes the
 // resolver return an empty state for the same item so the flat item model is
@@ -57,7 +57,7 @@ fn bm_held_lantern(
             continue;
         };
         // `held_item_transform` ends with `ItemInHandLayer`'s offsets; the
-        // original hangs the lantern from `translateToHand`, so undo them.
+        // vanilla hangs the lantern from `translateToHand`, so undo them.
         let f = if left { -1.0f32 } else { 1.0 };
         let deg = |d: f32| d.to_radians();
         let hand = hand

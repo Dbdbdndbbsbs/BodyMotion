@@ -71,12 +71,17 @@ fn settings_path() -> Option<ConfigPath> {
     ConfigPath::new(SETTINGS_FILE).ok()
 }
 
-/// Read one saved setting from the mod's config file.
+/// Read one saved setting from the mod's config file. Keys recorded under the
+/// earlier `bm.*` schema are still honoured.
 fn read_settings(host: &dyn ClientHost, key: &str) -> Option<String> {
     let path = settings_path()?;
     let bytes = host.config_files().read(&path).ok()?;
     let v: serde_json::Value = serde_json::from_slice(&bytes).ok()?;
-    v.get(key)?.as_str().map(str::to_owned)
+    if let Some(s) = v.get(key).and_then(|x| x.as_str()) {
+        return Some(s.to_owned());
+    }
+    let legacy = key.replacen("bodymotion.", "bm.", 1);
+    v.get(&legacy).and_then(|x| x.as_str()).map(str::to_owned)
 }
 
 /// Write the saved settings to the mod's config file.
@@ -200,7 +205,7 @@ pub fn reset_local() {
 }
 
 /// While the main hand holds a bow or crossbow, the off hand's item hides
-/// (the original mod's OffhandHidingAnimation); `hide_offhand_bm` suppresses its
+/// (the mod's OffhandHidingAnimation); `hide_offhand_bm` suppresses its
 /// vanilla render for the frame. A shield never hides.
 pub fn set_hide_offhand(v: bool) {
     HIDE_OFFHAND.with(|c| c.set(v));
