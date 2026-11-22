@@ -1,6 +1,6 @@
 id = "bodymotion"
 name = "Body Motion"
-version = "0.3.0"
+version = "0.3.1"
 description = "Smoother and more expressive third-person animations: eating, drinking, climbing, riding, maps, lanterns and more."
 authors = ["romaeboj"]
 # A native mod: Rust in src/, compiled by the launcher against the game build [native] pins, beside data/ and assets/.
@@ -10,7 +10,7 @@ capabilities = ["registries"]
 
 [native]
 game = "26.3"
-horizon = "f037744a79f9982c47876f49c5a3067279f88706"
+horizon = "2b77287de099c9316278ba7ac4d83590fdb7ef30"
 mixins = "e59da9094f0c2fdda6c627fe9eff22dec6a906f0"
 
 # Support modules: mirrors of game files that hold code the mixin helpers share.
