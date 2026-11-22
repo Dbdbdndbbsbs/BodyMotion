@@ -19,48 +19,48 @@ pub fn held_map_matrix(hand: Mat4, left: bool, main_hand: bool, off_hand_empty: 
         // Two-handed (one map, empty off hand): the map is held level in both
         // hands, chest-high.
         (
-            Mat4::from_rotation_x(deg(-76.0))
-                * Mat4::from_rotation_y(deg(188.0))
-                * Mat4::from_rotation_z(deg(16.0))
-                * Mat4::from_translation(Vec3::new(f / 16.0, 0.26, -0.58)),
+            Mat4::from_rotation_x(deg(270.0))
+                * Mat4::from_rotation_y(deg(-155.0))
+                * Mat4::from_rotation_z(deg(370.0))
+                * Mat4::from_translation(Vec3::new(f / 16.0, 0.24, -0.625)),
             if left {
-                Mat4::from_rotation_y(deg(140.0))
-                    * Mat4::from_rotation_z(deg(152.0))
-                    * Mat4::from_scale(Vec3::splat(0.34))
-                    * Mat4::from_translation(Vec3::new(0.52, -1.1, 0.1))
-                    * Mat4::from_scale(Vec3::splat(0.012_2))
+                Mat4::from_rotation_y(deg(-205.5))
+                    * Mat4::from_rotation_z(deg(-193.5))
+                    * Mat4::from_scale(Vec3::splat(0.38))
+                    * Mat4::from_translation(Vec3::new(0.585, -1.225, 0.15))
+                    * Mat4::from_scale(Vec3::splat(0.013_812_5))
             } else {
-                Mat4::from_rotation_y(deg(146.0))
-                    * Mat4::from_rotation_z(deg(198.0))
-                    * Mat4::from_scale(Vec3::splat(0.34))
-                    * Mat4::from_translation(Vec3::new(-0.88, -1.62, 0.02))
-                    * Mat4::from_scale(Vec3::splat(0.012_2))
+                Mat4::from_rotation_y(deg(-205.0))
+                    * Mat4::from_rotation_z(deg(-146.5))
+                    * Mat4::from_scale(Vec3::splat(0.38))
+                    * Mat4::from_translation(Vec3::new(-0.955, -1.8, 0.0))
+                    * Mat4::from_scale(Vec3::splat(0.013_812_5))
             },
         )
     } else if left {
         // Left hand: the single-handed pose, held at the same distance as the
         // right so both hands sit level.
         (
-            Mat4::from_rotation_x(deg(-78.0))
-                * Mat4::from_rotation_y(deg(194.0))
-                * Mat4::from_translation(Vec3::new(f / 16.0, 0.14, -0.58)),
-            Mat4::from_rotation_y(deg(150.0))
-                * Mat4::from_rotation_z(deg(170.0))
-                * Mat4::from_scale(Vec3::splat(0.34))
-                * Mat4::from_translation(Vec3::new(-0.08, -1.12, 0.0))
-                * Mat4::from_scale(Vec3::splat(0.009)),
+            Mat4::from_rotation_x(deg(270.0))
+                * Mat4::from_rotation_y(deg(-160.0))
+                * Mat4::from_translation(Vec3::new(f / 16.0, 0.125, -0.625)),
+            Mat4::from_rotation_y(deg(-200.0))
+                * Mat4::from_rotation_z(deg(-180.0))
+                * Mat4::from_scale(Vec3::splat(0.38))
+                * Mat4::from_translation(Vec3::new(-0.1, -1.2, 0.0))
+                * Mat4::from_scale(Vec3::splat(0.009_812_5)),
         )
     } else {
         // Right hand: the same pose, with a small Z push toward the face.
         (
-            Mat4::from_rotation_x(deg(-78.0))
-                * Mat4::from_rotation_y(deg(194.0))
-                * Mat4::from_translation(Vec3::new(f / 16.0, 0.14, -0.58)),
-            Mat4::from_rotation_y(deg(152.0))
-                * Mat4::from_rotation_z(deg(176.0))
-                * Mat4::from_scale(Vec3::splat(0.34))
-                * Mat4::from_translation(Vec3::new(-0.06, -1.14, -0.22))
-                * Mat4::from_scale(Vec3::splat(0.009)),
+            Mat4::from_rotation_x(deg(270.0))
+                * Mat4::from_rotation_y(deg(-160.0))
+                * Mat4::from_translation(Vec3::new(f / 16.0, 0.125, -0.625)),
+            Mat4::from_rotation_y(deg(-200.0))
+                * Mat4::from_rotation_z(deg(-180.0))
+                * Mat4::from_scale(Vec3::splat(0.38))
+                * Mat4::from_translation(Vec3::new(-0.1, -1.2, -0.2))
+                * Mat4::from_scale(Vec3::splat(0.009_812_5)),
         )
     };
     hand * undo * outer * inner
