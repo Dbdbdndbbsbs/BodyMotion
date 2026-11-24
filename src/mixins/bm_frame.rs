@@ -24,6 +24,7 @@ fn bm_frame(game: &mut crate::game::Game<'_>) {
         crawling: s.crawling,
         sleep: s.sleep,
         maps: s.maps,
+        lanterns: s.animate_lanterns,
         offhand_hiding: s.offhand_hiding,
         hug: s.hug,
         pet: s.pet,
@@ -41,11 +42,6 @@ fn bm_frame(game: &mut crate::game::Game<'_>) {
         rotation_everyone: s.rotation_everyone,
         max_normal_angle: s.max_normal_angle,
         max_blocking_angle: s.max_blocking_angle,
-        bow_mode: match s.bow_mode {
-            m::BowAnimation::Vanilla => anim::BowAnimation::Vanilla,
-            m::BowAnimation::CustomV1 => anim::BowAnimation::CustomV1,
-        },
-        custom_bow_rotation: s.custom_bow_rotation,
         clamp_crossbow: s.clamp_crossbow,
         tweak_elytra: s.tweak_elytra,
         smoothing: s.smoothing,
@@ -67,6 +63,7 @@ fn bm_frame(game: &mut crate::game::Game<'_>) {
     });
     // The Hold Up Items list (the tab's toggles).
     anim::set_holding_list(s.holding_items.clone());
+    anim::set_lantern_list(s.lantern_items.clone());
 
     let Some(p) = game.player.as_mut() else {
         anim::set_powder_snow(false);
@@ -332,8 +329,7 @@ fn bm_frame(game: &mut crate::game::Game<'_>) {
 
     // The rotation lock: the body follows the head. The
     // camera entity obeys `limitRotationLockToFP`; other players need
-    // `applyRotationLockToEveryone`. The custom bow's body turn is separate
-    // (`customBowRotationLock`).
+    // `applyRotationLockToEveryone`.
     if s.enabled {
         if let Some(m) = game.player_model.as_mut() {
             anim::rotate_local_body(m, game.camera_type.is_first_person());

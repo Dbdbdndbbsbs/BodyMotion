@@ -104,8 +104,6 @@ fn legacy_names(key: &str) -> &'static [&'static str] {
         "bodymotion.lock_remote" => &["bodymotion.applyRotationLockToEveryone", "bm.applyRotationLockToEveryone"],
         "bodymotion.head_limit" => &["bodymotion.maxNormalAngle", "bm.maxNormalAngle"],
         "bodymotion.block_head_limit" => &["bodymotion.maxBlockingAngle", "bm.maxBlockingAngle"],
-        "bodymotion.bow_pose" => &["bodymotion.bowAnimation", "bm.bowAnimation"],
-        "bodymotion.bow_lock" => &["bodymotion.customBowRotationLock", "bm.customBowRotationLock"],
         "bodymotion.bow_clamp" => &["bodymotion.clampCrossbowAnimations", "bm.clampCrossbowAnimations"],
         "bodymotion.glide_tweak" => &["bodymotion.tweakElytraAnimation", "bm.tweakElytraAnimation"],
         "bodymotion.smooth" => &["bodymotion.enableAnimationSmoothing", "bm.enableAnimationSmoothing"],

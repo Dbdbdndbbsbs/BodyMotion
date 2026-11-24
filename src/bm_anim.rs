@@ -35,13 +35,6 @@ pub enum HoldUpTarget {
     Camera,
 }
 
-/// `BowAnimation` (enum).
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum BowAnimation {
-    Vanilla,
-    CustomV1,
-}
-
 /// settings, switched each frame from settings.
 #[derive(Clone, Copy, Debug)]
 pub struct BmSettings {
@@ -59,6 +52,7 @@ pub struct BmSettings {
     pub crawling: bool,
     pub sleep: bool,
     pub maps: bool,
+    pub lanterns: bool,
     pub offhand_hiding: bool,
     pub hug: bool,
     pub pet: bool,
@@ -72,8 +66,6 @@ pub struct BmSettings {
     pub rotation_everyone: bool,
     pub max_normal_angle: f32,
     pub max_blocking_angle: f32,
-    pub bow_mode: BowAnimation,
-    pub custom_bow_rotation: bool,
     pub clamp_crossbow: bool,
     pub tweak_elytra: bool,
     pub smoothing: bool,
@@ -101,6 +93,7 @@ impl BmSettings {
         crawling: true,
         sleep: true,
         maps: true,
+        lanterns: true,
         offhand_hiding: true,
         hug: false,
         pet: true,
@@ -114,8 +107,6 @@ impl BmSettings {
         rotation_everyone: false,
         max_normal_angle: 50.0,
         max_blocking_angle: 15.0,
-        bow_mode: BowAnimation::Vanilla,
-        custom_bow_rotation: false,
         clamp_crossbow: false,
         tweak_elytra: true,
         smoothing: true,
@@ -210,6 +201,8 @@ thread_local! {
         RefCell::new(crate::fast_hash::FxHashMap::default());
     /// The Hold Up Items list (the Hold Up Items tab), from the frame hook.
     static HOLDING_LIST: RefCell<Vec<String>> = const { RefCell::new(Vec::new()) };
+    /// The Lanterns list (the Lanterns tab), from the frame hook.
+    static LANTERN_LIST: RefCell<Vec<String>> = const { RefCell::new(Vec::new()) };
     /// The last tick a remote player's body was turned to the head.
     static ROT_TICK: RefCell<crate::fast_hash::FxHashMap<u32, u32>> =
         RefCell::new(crate::fast_hash::FxHashMap::default());
@@ -335,6 +328,9 @@ pub fn horse_pump() -> f32 {
 pub fn set_holding_list(list: Vec<String>) {
     HOLDING_LIST.with(|c| *c.borrow_mut() = list);
 }
+pub fn set_lantern_list(list: Vec<String>) {
+    LANTERN_LIST.with(|c| *c.borrow_mut() = list);
+}
 /// Forget per-mob state for entities that left the world this frame.
 pub fn prune_stale(alive: &crate::fast_hash::FxHashSet<u32>) {
     FALL_MAP.with(|c| c.borrow_mut().retain(|id, _| alive.contains(id)));
@@ -352,6 +348,7 @@ pub fn reset_animation_state() {
     HORSE_WALK.with(|c| c.set(0.0));
     HORSE_STANDING.with(|c| c.set(false));
     HOLDING_LIST.with(|c| c.borrow_mut().clear());
+    LANTERN_LIST.with(|c| c.borrow_mut().clear());
     ROT_TICK.with(|c| c.borrow_mut().clear());
     LOCAL_TICK.with(|c| c.set(u32::MAX));
     LOCAL_FALLING.with(|c| c.set(false));
@@ -449,6 +446,8 @@ pub struct BmState {
     pub off_special: bool,
     pub main_map: bool,
     pub off_map: bool,
+    pub main_lantern: bool,
+    pub off_lantern: bool,
     pub off_empty: bool,
     pub spear: bool,
     pub sleep_pose: bool,
@@ -523,6 +522,8 @@ impl BmState {
         off_special: false,
         main_map: false,
         off_map: false,
+        main_lantern: false,
+        off_lantern: false,
         off_empty: true,
         spear: false,
         sleep_pose: false,
@@ -584,17 +585,16 @@ impl BmState {
             ) || (m.extra.use_animation == UseAnimation::Block)
         };
         // Only a filled map gets the map-holding pose. An empty map stays a
-        // plain item and is held like one. The explorer maps (treasure,
-        // ocean, woodland) are filled maps too: separate item ids, the same
-        // `map_id` component, the same pose.
+        // plain item and is held like one. Every filled-map item id ends in
+        // `_map`: `filled_map`, the explorer maps (treasure, ocean, woodland,
+        // village, desert, ...) and the bundled map variants. The empty map is
+        // the plain `minecraft:map`, which is excluded.
         let is_map = |item: Option<&str>| {
-            matches!(
-                item,
-                Some("minecraft:filled_map")
-                    | Some("minecraft:buried_treasure_map")
-                    | Some("minecraft:ocean_explorer_map")
-                    | Some("minecraft:woodland_explorer_map")
-            )
+            item.is_some_and(|i| {
+                i.starts_with("minecraft:")
+                    && i.ends_with("_map")
+                    && i != "minecraft:map"
+            })
         };
         let (boat, paddling, paddles) = boat();
         let is_player = matches!(m.kind.anim, Anim::Humanoid { zombie_arms: false });
@@ -750,6 +750,14 @@ impl BmState {
         };
         let main_hold = holds(m.extra.main_hand_id());
         let off_hold = holds(m.extra.off_hand_id());
+        // LanternAnimation: the hand's item is on the Lanterns list.
+        let lantern = |item: Option<&str>| {
+            item.is_some_and(|i| {
+                LANTERN_LIST.with(|c| c.borrow().iter().any(|l| l == i))
+            })
+        };
+        let main_lantern = lantern(m.extra.main_hand_id());
+        let off_lantern = lantern(m.extra.off_hand_id());
         // ActionRotationLockAnimation: eating, drinking or blocking (the
         // vanilla two-handed and single-handed poses keep the vanilla body).
         let rotation_target = (m.extra.use_animation == UseAnimation::Block)
@@ -801,6 +809,8 @@ impl BmState {
             off_special: special(m.extra.off_hand_id()),
             main_map: is_map(m.extra.main_hand_id()),
             off_map: is_map(m.extra.off_hand_id()),
+            main_lantern,
+            off_lantern,
             off_empty: m.extra.off_hand_id().is_none(),
             spear,
             sleep_pose: crate::mobs::villager::sleep_pose(m).is_some(),
@@ -974,6 +984,7 @@ pub fn apply_all(p: &mut Poses, st: &BmState) {
     } else if !guard && !st.swim_in_water {
         apply_map_holding(p, st);
         apply_hold_up(p, st);
+        apply_lantern_hold(p, st);
         apply_crawling(p, st);
         apply_falling(p, st);
         apply_burning(p, st);
@@ -985,9 +996,13 @@ pub fn apply_all(p: &mut Poses, st: &BmState) {
         apply_hug(p, st);
         apply_pet(p, st);
     }
+    // A two-handed map stays held exactly as on land while swimming: the
+    // board keeps its size and both hands stay on it, only the legs kick.
+    if !guard && st.swim_in_water && st.main_map && st.off_empty {
+        apply_map_holding(p, st);
+    }
     apply_offhand_two_handed(p, st);
     apply_clamp_crossbow(p, st);
-    apply_custom_bow(p, st);
     apply_item_swap(p, st);
     // Eat/Drink wins the using arm over the glide, the swim pose and a fresh
     // item swap; special items and sleep still keep their own poses.
@@ -1013,12 +1028,27 @@ fn apply_map_holding(p: &mut Poses, st: &BmState) {
     // `EntityUtil.getXRot` is the head pitch in degrees.
     let t = (90.0 - st.pitch) / 180.0;
     let lerp = |a: f32, from: f32, to: f32| from + a * (to - from);
-    // pitch-driven formulas swing the arms (and the maps in
-    // them) as the head tilts, so two maps converge and diverge when looking
-    // up and down. Pin the pose to level gaze (t = 0.5): the map stays fixed
-    // in the hands no matter the head angle.
+    // Pin the pose to level gaze (t = 0.5): each hand stays on its corner of
+    // the board no matter the head angle, so the arms never converge or pull
+    // apart. The wrists lift a little with the board (a small model-pixel Y
+    // offset) so the hands still hold the corners when looking down.
     let (x, y) = if both {
-        (-lerp(0.5, 0.7, 0.9), lerp(0.5, -0.3, -0.2))
+        // Both arms reach straight forward, level and parallel, so the board
+        // reads as held flat by two even hands.
+        (-0.8, 0.0)
+    } else {
+        (-lerp(0.5, 0.5, 1.5), 0.0)
+    };
+    let k = 0.5 - t; // 0 at level gaze, positive one way, negative the other
+    let (x, y) = if both {
+        // Both arms hold the board: looking up raises them high, looking down
+        // eases them a little, always parallel.
+        let x = if k < 0.0 {
+            -0.8 + k * 1.2
+        } else {
+            -0.8 + k * 0.6
+        };
+        (x, 0.0)
     } else {
         (-lerp(0.5, 0.5, 1.5), 0.0)
     };
@@ -1026,7 +1056,7 @@ fn apply_map_holding(p: &mut Poses, st: &BmState) {
         let name = if right { "right_arm" } else { "left_arm" };
         p.xrot(name, x);
         p.yrot(name, if right { y } else { -y });
-        p.zrot(name, if right { 0.3 } else { -0.3 });
+        p.zrot(name, 0.0);
     };
     if both {
         arm(p, true);
@@ -1117,6 +1147,38 @@ fn apply_hold_up(p: &mut Poses, st: &BmState) {
         arm(p, false);
     } else {
         arm(p, true);
+    }
+}
+
+/// LanternAnimation: the arm holding a lantern lifts it ahead of the body so
+/// the lantern hangs clear. The pose is fixed: the head's pitch and yaw never
+/// move the hand, so the lantern only answers to the hand's own motion. Only
+/// lanterns use it; other hold-up items keep their own pose.
+fn apply_lantern_hold(p: &mut Poses, st: &BmState) {
+    if !bm_on(bm().lanterns) {
+        return;
+    }
+    let swinging = |left: bool| {
+        st.swing > 0.0
+            && match st.swing_right_arm {
+                Some(right) => left == !right,
+                None => left == st.main_arm_left,
+            }
+    };
+    let arm = |p: &mut Poses, left: bool| {
+        if swinging(left) {
+            return;
+        }
+        let name = if left { "left_arm" } else { "right_arm" };
+        p.xrot(name, -0.65);
+        p.yrot(name, if left { 0.18 } else { -0.18 });
+        p.zrot(name, 0.0);
+    };
+    if st.main_lantern {
+        arm(p, st.main_arm_left);
+    }
+    if st.off_lantern {
+        arm(p, !st.main_arm_left);
     }
 }
 
@@ -1431,31 +1493,6 @@ fn apply_clamp_crossbow(p: &mut Poses, st: &BmState) {
         };
         p.xrot(name, x);
     }
-}
-
-/// CustomBowAnimation (priority 3200, `bowAnimation` = CUSTOM_V1): the
-/// custom draw pose, the arms track the aim.
-fn apply_custom_bow(p: &mut Poses, st: &BmState) {
-    let n = bm();
-    if !n.master || n.bow_mode != BowAnimation::CustomV1 || !st.using_bow {
-        return;
-    }
-    // The bow is in the left hand when a right-handed player uses the off
-    // hand or a left-handed player the main hand.
-    let left = if st.main_arm_left { !st.using_off_hand } else { st.using_off_hand };
-    let invert = if left { -1.0 } else { 1.0 };
-    let (main, off) = if left { ("left_arm", "right_arm") } else { ("right_arm", "left_arm") };
-    // `model.head.xRot` is the head pitch, `wrapDegrees` wraps radians.
-    let pitch = wrap_deg(-st.pitch.to_radians());
-    let yaw = wrap_deg(st.head_yaw);
-    let main_z = p.get(main)[5];
-    let off_z = p.get(off)[5];
-    p.yrot(main, invert * (-0.18 + pitch * 0.9).clamp(-1.05, 0.7));
-    p.xrot(main, (-1.45 + invert * yaw * 0.8).clamp(-2.1, 0.05));
-    p.zrot(main, main_z + invert * 1.3);
-    p.yrot(off, invert * (0.05 + pitch * 0.85).clamp(-0.85, 0.75));
-    p.xrot(off, (-1.45 + invert * yaw * 0.8 + 0.65).clamp(-0.9, -0.5));
-    p.zrot(off, off_z + invert * 1.3);
 }
 
 /// Crawling pose: hands and knees pull the body along; each limb advances in
@@ -1783,36 +1820,12 @@ fn rotation_target(m: &Mob) -> bool {
         && m.extra.off_hand_id().and_then(crate::spear::Kinetic::of).is_none()
 }
 
-/// CustomBowAnimation's body turn (`customBowRotationLock`): the body turns
-/// 32 degrees away from the aim, mirrored for a bow in the left hand.
-fn custom_bow_body(m: &Mob) -> Option<f32> {
-    let n = bm();
-    if n.bow_mode != BowAnimation::CustomV1
-        || !n.custom_bow_rotation
-        || m.extra.using_item <= 0
-        || used_item(m) != Some("minecraft:bow")
-    {
-        return None;
-    }
-    let bow_left = if m.main_arm_left() {
-        !m.extra.using_off_hand
-    } else {
-        m.extra.using_off_hand
-    };
-    Some(m.yaw + if bow_left { 32.0 } else { -32.0 })
-}
-
 /// Turn the local player's body to the head (the body-follows-head rotation
 /// lock). The camera entity is limited to first person when the setting says
 /// so; a ladder's body lock and a vehicle keep the vanilla body.
 pub fn rotate_local_body(m: &mut Mob, first_person: bool) {
     let n = bm();
     if !n.master {
-        return;
-    }
-    if let Some(deg) = custom_bow_body(m) {
-        m.body_yaw = deg;
-        m.previous_body_yaw = deg;
         return;
     }
     if m.extra.passenger || (CLIMBING.with(|c| c.get()) && LADDER_LOCK.with(|c| c.get())) {
@@ -1853,13 +1866,6 @@ pub fn rotate_remote_bodies<'a>(mobs: impl IntoIterator<Item = &'a mut Mob>) {
         let mut ticks = cell.borrow_mut();
         for m in mobs {
             if m.id == 0 || m.kind.id != "minecraft:player" || m.extra.passenger {
-                continue;
-            }
-            // CustomBowAnimation's body turn is part of the animation itself,
-            // so every rendered player gets it, not only with the rotation lock.
-            if let Some(deg) = custom_bow_body(m) {
-                m.body_yaw = deg;
-                m.previous_body_yaw = deg;
                 continue;
             }
             if !n.rotation_everyone {

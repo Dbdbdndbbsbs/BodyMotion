@@ -56,43 +56,63 @@ fn bm_held_lantern(
         ) else {
             continue;
         };
-        // `held_item_transform` ends with `ItemInHandLayer`'s offsets; the
-        // vanilla hangs the lantern from `translateToHand`, so undo them.
-        let f = if left { -1.0f32 } else { 1.0 };
-        let deg = |d: f32| d.to_radians();
-        let hand = hand
-            * glam::Mat4::from_translation(glam::Vec3::new(
-                -f / 16.0,
-                -2.0 / 16.0,
-                10.0 / 16.0,
-            ))
-            * glam::Mat4::from_rotation_y(deg(-180.0))
-            * glam::Mat4::from_rotation_x(deg(90.0));
-        // The view yaw the sway is measured against.
-        let t = hand.w_axis;
-        let vel = lantern::spring(
+        // The pivot is the fist: the palm plus a small own grip offset. The
+        // lantern hangs from its handle's top ring, so the block is placed by
+        // the swing direction alone; no item-layer offsets are undone.
+        let palm = hand.w_axis.truncate();
+        let pivot = palm + glam::Vec3::Y * 0.02;
+        // Remove the camera-relative entity origin before projecting into the
+        // body frame. Projecting the absolute hand position makes a body yaw
+        // change look like arm motion, even when the hand is fixed to the body.
+        let origin = horizon_client_lib::mobs::render::base_transform(
+            mob,
+            alpha as f32,
+            camera,
+        )
+        .w_axis
+        .truncate();
+        let relative_hand = palm - origin;
+        // The body's own frame: head turns and body turns do not feed the
+        // pendulum; only the hand's position relative to the torso does.
+        let body_yaw = horizon_client_lib::mobs::anim::body_rot(mob, alpha as f32);
+        let yaw = body_yaw.to_radians();
+        let right = glam::Vec3::new(-yaw.cos(), 0.0, -yaw.sin());
+        let forward = glam::Vec3::new(-yaw.sin(), 0.0, yaw.cos());
+        let local = [
+            relative_hand.dot(right) as f64,
+            relative_hand.y as f64,
+            relative_hand.dot(forward) as f64,
+        ];
+        let angles = lantern::pendulum(
             mob,
             game.world.game_time,
-            [t.x as f64, t.y as f64, t.z as f64],
+            local,
             alpha as f32,
-            mob.yaw as f64,
+            off_hand,
         );
-        let yaw = mob.yaw.to_radians() as f64;
-        let right = [yaw.cos(), 0.0, -yaw.sin()];
-        let forward = [-yaw.sin(), 0.0, yaw.cos()];
-        let off_right = vel[0] * right[0] + vel[2] * right[2];
-        let off_forward = vel[0] * forward[0] + vel[2] * forward[2];
-        let sway_roll = (off_right as f32 * 40.0).clamp(-28.0, 28.0);
-        let sway_pitch = (off_forward as f32 * 40.0).clamp(-28.0, 28.0);
-        // A compact hang: scale, one combined pivot/centre offset, one base
-        // tilt and the two sway rotations, then back to the block origin.
-        let m = hand
-            * glam::Mat4::from_scale(glam::Vec3::splat(0.66))
-            * glam::Mat4::from_translation(glam::Vec3::new(0.13, 1.05, 0.28))
-            * glam::Mat4::from_rotation_x(deg(-96.0))
-            * glam::Mat4::from_rotation_z(deg(sway_roll))
-            * glam::Mat4::from_rotation_x(deg(sway_pitch * 0.5))
-            * glam::Mat4::from_translation(glam::Vec3::new(-0.5, -0.5, -0.5));
+        // The handle swings away from vertical in the body's frame; the
+        // block's local +Y points back up the suspension, toward the pivot.
+        let hang = (glam::Vec3::NEG_Y
+            + right * angles[0].sin()
+            + forward * angles[1].sin())
+        .normalize_or_zero();
+        let up = -hang;
+        // Keep the block's own yaw on the body, so it never spins against the
+        // hand while the player turns.
+        let side = (right - up * right.dot(up)).normalize_or_zero();
+        let back = side.cross(up);
+        let rot = glam::Mat4::from_cols(
+            side.extend(0.0),
+            up.extend(0.0),
+            back.extend(0.0),
+            glam::Vec4::W,
+        );
+        // The handle's top is at 11/16 of the block model, so shifting the
+        // model down by that puts the ring in the fist.
+        let m = glam::Mat4::from_translation(pivot)
+            * rot
+            * glam::Mat4::from_scale(glam::Vec3::splat(0.55))
+            * glam::Mat4::from_translation(glam::Vec3::new(-0.5, -0.6875, -0.5));
         // The lantern item's block model (`Block.byItem(item).defaultBlockState()`).
         let Some(state) = game.pack.assets.registry.default_state(&item) else {
             continue;

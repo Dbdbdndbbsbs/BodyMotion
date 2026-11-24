@@ -39,8 +39,6 @@ const KEY_LIMIT_FP: &str = "bodymotion.lock_first_person";
 const KEY_ROTATION_EVERYONE: &str = "bodymotion.lock_remote";
 const KEY_MAX_NORMAL: &str = "bodymotion.head_limit";
 const KEY_MAX_BLOCKING: &str = "bodymotion.block_head_limit";
-const KEY_BOW: &str = "bodymotion.bow_pose";
-const KEY_CUSTOM_BOW_ROTATION: &str = "bodymotion.bow_lock";
 const KEY_CLAMP: &str = "bodymotion.bow_clamp";
 const KEY_ELYTRA: &str = "bodymotion.glide_tweak";
 const KEY_SMOOTHING: &str = "bodymotion.smooth";
@@ -106,13 +104,6 @@ pub enum HoldUpTarget {
     Camera,
 }
 
-/// `BowAnimation` (enum).
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum BowAnimation {
-    Vanilla,
-    CustomV1,
-}
-
 /// One row of the Settings tab, in order. Headings and the
 /// disabled rows carry an index into their own label tables.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -125,7 +116,7 @@ pub enum Row {
     Blank,
 }
 
-pub const ROW_COUNT: usize = 53;
+pub const ROW_COUNT: usize = 51;
 
 const ROWS: [Row; ROW_COUNT] = [
     Row::Heading(0),
@@ -139,48 +130,46 @@ const ROWS: [Row; ROW_COUNT] = [
     Row::Toggle(4),
     Row::Toggle(5),
     Row::Toggle(6),
-    Row::Toggle(27),
+    Row::Toggle(26),
     Row::Toggle(7),
     Row::Toggle(8),
     Row::Toggle(9),
-    Row::Choice(0),
     Row::Toggle(10),
     Row::Toggle(11),
-    Row::Toggle(12),
     Row::Blank,
     Row::Heading(1),
+    Row::Toggle(12),
     Row::Toggle(13),
-    Row::Toggle(14),
     Row::Slider(3),
     Row::Blank,
     Row::Heading(2),
-    Row::Choice(1),
+    Row::Choice(0),
+    Row::Toggle(14),
     Row::Toggle(15),
     Row::Toggle(16),
-    Row::Toggle(17),
     Row::Blank,
     Row::Heading(3),
     Row::Slider(4),
     Row::Slider(5),
     Row::Blank,
     Row::Heading(4),
-    Row::Choice(2),
-    Row::Toggle(18),
+    Row::Choice(1),
+    Row::Toggle(17),
     Row::Slider(6),
-    Row::Choice(3),
+    Row::Choice(2),
     Row::Slider(7),
-    Row::Toggle(19),
+    Row::Toggle(18),
     Row::Blank,
     Row::Heading(5),
+    Row::Toggle(19),
     Row::Toggle(20),
     Row::Toggle(21),
     Row::Toggle(22),
-    Row::Toggle(23),
     Row::Blank,
     Row::Heading(6),
+    Row::Toggle(23),
     Row::Toggle(24),
     Row::Toggle(25),
-    Row::Toggle(26),
 ];
 
 pub fn row(i: usize) -> Row {
@@ -188,11 +177,11 @@ pub fn row(i: usize) -> Row {
 }
 
 /// The number of toggle settings (the same order as `get`/`click`).
-pub const TOGGLE_COUNT: usize = 28;
+pub const TOGGLE_COUNT: usize = 27;
 /// The number of slider settings (the same order as `slider`).
 pub const SLIDER_COUNT: usize = 8;
 /// The number of enum choices (the same order as `choice`).
-pub const CHOICE_COUNT: usize = 4;
+pub const CHOICE_COUNT: usize = 3;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Settings {
@@ -245,10 +234,6 @@ pub struct Settings {
     pub limit_rotation_fp: bool,
     /// Apply the rotation lock to every player, not just the camera entity.
     pub rotation_everyone: bool,
-    /// `BowAnimation`: Vanilla or CustomV1 (the custom draw pose).
-    pub bow_mode: BowAnimation,
-    /// The custom bow's body turn (`customBowRotationLock`).
-    pub custom_bow_rotation: bool,
     /// Crossbow poses clamp their arm angles (`clampCrossbowAnimations`).
     pub clamp_crossbow: bool,
     /// Elytra limbs react to speed (`tweakElytraAnimation`).
@@ -308,8 +293,6 @@ impl Default for Settings {
             rotation_mode: RotationLock::None,
             limit_rotation_fp: true,
             rotation_everyone: false,
-            bow_mode: BowAnimation::Vanilla,
-            custom_bow_rotation: false,
             clamp_crossbow: false,
             tweak_elytra: true,
             smoothing: true,
@@ -401,13 +384,6 @@ impl Settings {
             },
             limit_rotation_fp: is_on(&read, KEY_LIMIT_FP, d.limit_rotation_fp),
             rotation_everyone: is_on(&read, KEY_ROTATION_EVERYONE, d.rotation_everyone),
-            // the mod stores the enum; an older boolean `true` maps to
-            // the custom pose.
-            bow_mode: match read(KEY_BOW).as_deref() {
-                Some("CUSTOM_V1") | Some("true") => BowAnimation::CustomV1,
-                _ => BowAnimation::Vanilla,
-            },
-            custom_bow_rotation: is_on(&read, KEY_CUSTOM_BOW_ROTATION, d.custom_bow_rotation),
             clamp_crossbow: is_on(&read, KEY_CLAMP, d.clamp_crossbow),
             tweak_elytra: is_on(&read, KEY_ELYTRA, d.tweak_elytra),
             smoothing: is_on(&read, KEY_SMOOTHING, d.smoothing),
@@ -499,15 +475,6 @@ impl Settings {
             ),
             (KEY_LIMIT_FP.into(), f(self.limit_rotation_fp)),
             (KEY_ROTATION_EVERYONE.into(), f(self.rotation_everyone)),
-            (
-                KEY_BOW.into(),
-                match self.bow_mode {
-                    BowAnimation::Vanilla => "VANILLA",
-                    BowAnimation::CustomV1 => "CUSTOM_V1",
-                }
-                .into(),
-            ),
-            (KEY_CUSTOM_BOW_ROTATION.into(), f(self.custom_bow_rotation)),
             (KEY_CLAMP.into(), f(self.clamp_crossbow)),
             (KEY_ELYTRA.into(), f(self.tweak_elytra)),
             (KEY_SMOOTHING.into(), f(self.smoothing)),
@@ -556,24 +523,23 @@ impl Settings {
             7 => self.item_swap,
             8 => self.pet,
             9 => self.freezing,
-            10 => self.custom_bow_rotation,
-            11 => self.clamp_crossbow,
-            12 => self.burning,
-            13 => self.smoothing,
-            14 => self.disable_leg_smoothing,
-            15 => self.limit_rotation_fp,
-            16 => self.rotation_everyone,
-            17 => self.rotation_lock,
-            18 => self.animate_lanterns,
-            19 => self.hold_up_only_self,
-            20 => self.tweak_elytra,
-            21 => self.dont_hold_items_in_bed,
-            22 => self.sleep,
-            23 => self.offhand_hiding,
-            24 => self.naruto,
-            25 => self.hug,
-            26 => self.falling,
-            27 => self.horse_leg,
+            10 => self.clamp_crossbow,
+            11 => self.burning,
+            12 => self.smoothing,
+            13 => self.disable_leg_smoothing,
+            14 => self.limit_rotation_fp,
+            15 => self.rotation_everyone,
+            16 => self.rotation_lock,
+            17 => self.animate_lanterns,
+            18 => self.hold_up_only_self,
+            19 => self.tweak_elytra,
+            20 => self.dont_hold_items_in_bed,
+            21 => self.sleep,
+            22 => self.offhand_hiding,
+            23 => self.naruto,
+            24 => self.hug,
+            25 => self.falling,
+            26 => self.horse_leg,
             _ => false,
         }
     }
@@ -591,24 +557,23 @@ impl Settings {
             7 => self.item_swap = v,
             8 => self.pet = v,
             9 => self.freezing = v,
-            10 => self.custom_bow_rotation = v,
-            11 => self.clamp_crossbow = v,
-            12 => self.burning = v,
-            13 => self.smoothing = v,
-            14 => self.disable_leg_smoothing = v,
-            15 => self.limit_rotation_fp = v,
-            16 => self.rotation_everyone = v,
-            17 => self.rotation_lock = v,
-            18 => self.animate_lanterns = v,
-            19 => self.hold_up_only_self = v,
-            20 => self.tweak_elytra = v,
-            21 => self.dont_hold_items_in_bed = v,
-            22 => self.sleep = v,
-            23 => self.offhand_hiding = v,
-            24 => self.naruto = v,
-            25 => self.hug = v,
-            26 => self.falling = v,
-            27 => self.horse_leg = v,
+            10 => self.clamp_crossbow = v,
+            11 => self.burning = v,
+            12 => self.smoothing = v,
+            13 => self.disable_leg_smoothing = v,
+            14 => self.limit_rotation_fp = v,
+            15 => self.rotation_everyone = v,
+            16 => self.rotation_lock = v,
+            17 => self.animate_lanterns = v,
+            18 => self.hold_up_only_self = v,
+            19 => self.tweak_elytra = v,
+            20 => self.dont_hold_items_in_bed = v,
+            21 => self.sleep = v,
+            22 => self.offhand_hiding = v,
+            23 => self.naruto = v,
+            24 => self.hug = v,
+            25 => self.falling = v,
+            26 => self.horse_leg = v,
             _ => {}
         }
     }
@@ -654,22 +619,18 @@ impl Settings {
     /// The choice `i`'s selected index.
     pub fn choice(&self, i: usize) -> usize {
         match i {
-            0 => match self.bow_mode {
-                BowAnimation::Vanilla => 0,
-                BowAnimation::CustomV1 => 1,
-            },
-            1 => match self.rotation_mode {
+            0 => match self.rotation_mode {
                 RotationLock::None => 0,
                 RotationLock::Fixed => 1,
                 RotationLock::Smooth => 2,
             },
-            2 => match self.hold_up_mode {
+            1 => match self.hold_up_mode {
                 HoldUpMode::Config => 0,
                 HoldUpMode::All => 1,
                 HoldUpMode::None => 2,
                 HoldUpMode::ConfigInverted => 3,
             },
-            3 => match self.hold_up_target {
+            2 => match self.hold_up_target {
                 HoldUpTarget::None => 0,
                 HoldUpTarget::Camera => 1,
             },
@@ -680,17 +641,15 @@ impl Settings {
     /// Selects the choice `i`'s value `n`.
     pub fn set_choice(&mut self, i: usize, n: usize) {
         match (i, n) {
-            (0, 0) => self.bow_mode = BowAnimation::Vanilla,
-            (0, 1) => self.bow_mode = BowAnimation::CustomV1,
-            (1, 0) => self.rotation_mode = RotationLock::None,
-            (1, 1) => self.rotation_mode = RotationLock::Fixed,
-            (1, 2) => self.rotation_mode = RotationLock::Smooth,
-            (2, 0) => self.hold_up_mode = HoldUpMode::Config,
-            (2, 1) => self.hold_up_mode = HoldUpMode::All,
-            (2, 2) => self.hold_up_mode = HoldUpMode::None,
-            (2, 3) => self.hold_up_mode = HoldUpMode::ConfigInverted,
-            (3, 0) => self.hold_up_target = HoldUpTarget::None,
-            (3, 1) => self.hold_up_target = HoldUpTarget::Camera,
+            (0, 0) => self.rotation_mode = RotationLock::None,
+            (0, 1) => self.rotation_mode = RotationLock::Fixed,
+            (0, 2) => self.rotation_mode = RotationLock::Smooth,
+            (1, 0) => self.hold_up_mode = HoldUpMode::Config,
+            (1, 1) => self.hold_up_mode = HoldUpMode::All,
+            (1, 2) => self.hold_up_mode = HoldUpMode::None,
+            (1, 3) => self.hold_up_mode = HoldUpMode::ConfigInverted,
+            (2, 0) => self.hold_up_target = HoldUpTarget::None,
+            (2, 1) => self.hold_up_target = HoldUpTarget::Camera,
             _ => {}
         }
     }
@@ -761,10 +720,9 @@ pub fn slider_range(i: usize) -> (f32, f32, f32) {
 /// The number of values of the choice `i`.
 pub fn choice_len(i: usize) -> usize {
     match i {
-        0 => 2,
-        1 => 3,
-        2 => 4,
-        3 => 2,
+        0 => 3,
+        1 => 4,
+        2 => 2,
         _ => 1,
     }
 }
@@ -889,7 +847,7 @@ pub fn lang_text(lang: &str, key: &str) -> Option<String> {
 }
 
 /// Each toggle's translation key (the same order as `get`/`click`).
-const TOGGLE_KEYS: [&str; 28] = [
+const TOGGLE_KEYS: [&str; 27] = [
     "text.bodymotion.enable.inworldmaprendering",
     "text.bodymotion.enable.ladderanimation",
     "text.bodymotion.enable.rotatetoladder",
@@ -900,7 +858,6 @@ const TOGGLE_KEYS: [&str; 28] = [
     "text.bodymotion.enable.itemSwapAnimation",
     "text.bodymotion.enable.petAnimation",
     "text.bodymotion.enable.freezingAnimation",
-    "text.bodymotion.enable.customBowRotationLock",
     "text.bodymotion.enable.clampCrossbowAnimations",
     "text.bodymotion.enable.burningAnimation",
     "text.bodymotion.enable.animationsmoothing",
@@ -933,8 +890,7 @@ const SLIDER_KEYS: [&str; 8] = [
 ];
 
 /// Each choice's translation key (the same order as `choice`).
-const CHOICE_KEYS: [&str; 4] = [
-    "text.bodymotion.enable.bowAnimation",
+const CHOICE_KEYS: [&str; 3] = [
     "text.bodymotion.rotationlock",
     "text.bodymotion.holdUpItemsMode",
     "text.bodymotion.holdUpTarget",
@@ -942,7 +898,6 @@ const CHOICE_KEYS: [&str; 4] = [
 
 /// The enum constant name per choice value (enum variants).
 const CHOICE_VALUES: &[&[&str]] = &[
-    &["VANILLA", "CUSTOM_V1"],
     &["NONE", "FIXED", "SMOOTH"],
     &["CONFIG", "ALL", "NONE", "CONFIG_INVERTED"],
     &["NONE", "CAMERA"],
@@ -998,7 +953,7 @@ pub fn heading(i: usize, lang: &str) -> String {
 /// The label of the greyed-out row `i` (a row whose animation is not ported).
 pub fn disabled(i: usize, lang: &str) -> String {
     match i {
-        0 => lang_text(lang, TOGGLE_KEYS[27]).unwrap_or_default(),
+        0 => lang_text(lang, TOGGLE_KEYS[26]).unwrap_or_default(),
         _ => String::new(),
     }
 }
@@ -1084,7 +1039,6 @@ mod tests {
         assert_eq!(s.rotation_mode, RotationLock::None);
         assert_eq!(s.hold_up_mode, HoldUpMode::Config);
         assert_eq!(s.hold_up_target, HoldUpTarget::Camera);
-        assert_eq!(s.bow_mode, BowAnimation::Vanilla);
     }
 
     #[test]
@@ -1107,10 +1061,10 @@ mod tests {
         off.click(3);
         assert_eq!(off.labels("ru_ru")[3], "Ползание: Выкл.");
         // Unknown language falls back to English.
-        assert_eq!(s.labels("xx_xx")[12], "Burning: On");
+        assert_eq!(s.labels("xx_xx")[11], "Burning: On");
         assert_eq!(s.labels("en_us")[0], "Maps In The World: On");
         assert_eq!(
-            s.labels("en_us")[23],
+            s.labels("en_us")[22],
             "Hide Offhand While Drawing A Bow: On"
         );
     }
@@ -1123,8 +1077,7 @@ mod tests {
             maps: false,
             rotation_mode: RotationLock::Smooth,
             hold_up_mode: HoldUpMode::All,
-            bow_mode: BowAnimation::CustomV1,
-            ladder_arm_height: 2.3,
+            ladder_arm_height: 2.4,
             smoothing_speed: 0.5,
             ..Settings::default()
         };
@@ -1135,10 +1088,26 @@ mod tests {
         assert!(!loaded.maps);
         assert_eq!(loaded.rotation_mode, RotationLock::Smooth);
         assert_eq!(loaded.hold_up_mode, HoldUpMode::All);
-        assert_eq!(loaded.bow_mode, BowAnimation::CustomV1);
-        assert_eq!(loaded.ladder_arm_height, 2.3);
+        assert_eq!(loaded.ladder_arm_height, 2.4);
         assert_eq!(loaded.smoothing_speed, 0.5);
         assert!(loaded.burning);
+    }
+
+    #[test]
+    fn saved_omits_retired_bow_keys() {
+        let saved = Settings::default().saved();
+        assert!(!saved.iter().any(|(k, _)| k == "bodymotion.bow_pose"));
+        assert!(!saved.iter().any(|(k, _)| k == "bodymotion.bow_lock"));
+    }
+
+    #[test]
+    fn old_bow_config_is_ignored_and_others_load() {
+        let mut map = std::collections::HashMap::new();
+        map.insert("bodymotion.bow_pose".to_string(), "CUSTOM_V1".to_string());
+        map.insert("bodymotion.bow_lock".to_string(), "true".to_string());
+        map.insert("bodymotion.map3d".to_string(), "false".to_string());
+        let s = Settings::load(|k| map.get(k).cloned());
+        assert!(!s.maps);
     }
 
     #[test]
@@ -1151,7 +1120,7 @@ mod tests {
         assert!(s.get(0));
         s.reset();
         assert!(s.get(0));
-        assert!(s.get(23));
+        assert!(s.get(22));
         assert!(!s.get(99));
         s.set(99, false);
     }
@@ -1159,7 +1128,7 @@ mod tests {
     #[test]
     fn sliders_snap_and_format() {
         let mut s = Settings::default();
-        assert_eq!(s.slider(0), 0.35);
+        assert_eq!(s.slider(0), 0.28);
         s.set_slider(0, 0.333);
         assert_eq!(s.slider(0), 0.33);
         s.set_slider(0, 9.0);
@@ -1180,15 +1149,13 @@ mod tests {
         let mut s = Settings::default();
         assert_eq!(s.choice(0), 0);
         s.cycle_choice(0);
-        assert_eq!(s.bow_mode, BowAnimation::CustomV1);
-        s.cycle_choice(0);
-        assert_eq!(s.bow_mode, BowAnimation::Vanilla);
-        assert_eq!(choice_len(1), 3);
-        s.cycle_choice(1);
         assert_eq!(s.rotation_mode, RotationLock::Fixed);
-        s.cycle_choice(2);
+        s.cycle_choice(0);
+        assert_eq!(s.rotation_mode, RotationLock::Smooth);
+        assert_eq!(choice_len(1), 4);
+        s.cycle_choice(1);
         assert_eq!(s.hold_up_mode, HoldUpMode::All);
-        s.cycle_choice(3);
+        s.cycle_choice(2);
         assert_eq!(s.hold_up_target, HoldUpTarget::None);
     }
 
@@ -1197,16 +1164,19 @@ mod tests {
         assert_eq!(row(0), Row::Heading(0));
         assert_eq!(row(1), Row::Toggle(0));
         assert_eq!(row(4), Row::Slider(0));
-        assert_eq!(row(11), Row::Toggle(27));
-        assert_eq!(row(15), Row::Choice(0));
-        assert_eq!(row(26), Row::Choice(1));
-        assert_eq!(row(31), Row::Heading(3));
-        assert_eq!(row(35), Row::Heading(4));
-        assert_eq!(row(36), Row::Choice(2));
-        assert_eq!(row(39), Row::Choice(3));
-        assert_eq!(row(43), Row::Heading(5));
-        assert_eq!(row(49), Row::Heading(6));
-        assert_eq!(row(52), Row::Toggle(26));
+        assert_eq!(row(11), Row::Toggle(26));
+        assert_eq!(row(15), Row::Toggle(10));
+        assert_eq!(row(24), Row::Choice(0));
+        assert_eq!(row(29), Row::Heading(3));
+        assert_eq!(row(30), Row::Slider(4));
+        assert_eq!(row(33), Row::Heading(4));
+        assert_eq!(row(34), Row::Choice(1));
+        assert_eq!(row(36), Row::Slider(6));
+        assert_eq!(row(37), Row::Choice(2));
+        assert_eq!(row(39), Row::Toggle(18));
+        assert_eq!(row(41), Row::Heading(5));
+        assert_eq!(row(47), Row::Heading(6));
+        assert_eq!(row(50), Row::Toggle(25));
         assert_eq!(row(ROW_COUNT), Row::Blank);
     }
 
@@ -1222,18 +1192,18 @@ mod tests {
         assert_eq!(tab_label_by_tab(2, "ru_ru"), "Фонари");
         assert_eq!(disabled(0, "ru_ru"), "Позы ног на лошади");
         assert_eq!(name(8, "ru_ru"), "Поглаживание");
-        assert_eq!(name(10, "ru_ru"), "Наклон тела с луком");
-        assert_eq!(name(18, "ru_ru"), "Качающиеся фонари");
-        assert_eq!(name(26, "en_us"), "Falling");
-        assert_eq!(name(26, "ru_ru"), "Падение");
-        assert_eq!(choice_value(2, 3, "ru_ru"), "Всё, кроме выбранных");
+        assert_eq!(name(10, "ru_ru"), "Ограничение прицеливания");
+        assert_eq!(name(17, "ru_ru"), "Качающиеся фонари");
+        assert_eq!(name(25, "en_us"), "Falling");
+        assert_eq!(name(25, "ru_ru"), "Падение");
+        assert_eq!(choice_value(1, 3, "ru_ru"), "Всё, кроме выбранных");
         assert!(!toggle_tooltip(0, "ru_ru").is_empty());
-        assert!(!toggle_tooltip(18, "ru_ru").is_empty());
+        assert!(!toggle_tooltip(17, "ru_ru").is_empty());
         assert!(russian("ru_ru"));
         assert!(!russian("en_us"));
-        assert_eq!(name(23, "en_us"), "Hide Offhand While Drawing A Bow");
-        assert_eq!(choice_name(1, "ru_ru"), "Поворот тела");
-        assert_eq!(choice_value(1, 0, "ru_ru"), "Выкл.");
+        assert_eq!(name(22, "en_us"), "Hide Offhand While Drawing A Bow");
+        assert_eq!(choice_name(0, "ru_ru"), "Поворот тела");
+        assert_eq!(choice_value(0, 0, "ru_ru"), "Выкл.");
     }
 
     #[test]

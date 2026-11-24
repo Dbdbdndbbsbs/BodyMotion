@@ -9,17 +9,12 @@ mod pet;
 pub mod runtime;
 
 use mod_api::{
-    ArmPose, CalculatePlayerTurnEvent, ClientHost, CustomArmPose, Flow, GetArmPoseEvent,
-    ArmPoseTransformEvent, Hooks, Registrar, RegistrationContext, RenderFramePreEvent,
-    ScreenCharTypedPreEvent, ScreenRenderPostEvent, SettingSpec, UseAnimation,
+    ClientHost, Flow, Hooks, Registrar, RegistrationContext, RenderFramePreEvent,
+    ScreenCharTypedPreEvent, ScreenRenderPostEvent, SettingSpec,
 };
 
 #[derive(Default)]
 struct Mod;
-
-/// The registered custom bow-draw pose (`get_arm_pose` returns it for a bow in
-/// the custom mode; `arm_pose_transform` writes its arm angles).
-static BOW_POSE: std::sync::OnceLock<CustomArmPose> = std::sync::OnceLock::new();
 
 thread_local! {
     static LOADED: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
@@ -39,15 +34,6 @@ impl Hooks for Mod {
         for (key, label, min, max, step, default) in SLIDERS {
             let _ = r.register_setting(SettingSpec::range(key, label, min, max, step, default));
         }
-        let _ = r.register_setting(SettingSpec::choice(
-            "bodymotion.bow_pose",
-            "text.bodymotion.enable.bowAnimation",
-            [
-                "text.bodymotion.enable.bowAnimation.VANILLA",
-                "text.bodymotion.enable.bowAnimation.CUSTOM_V1",
-            ],
-            0,
-        ));
         let _ = r.register_setting(SettingSpec::choice(
             "bodymotion.body_lock_mode",
             "text.bodymotion.rotationlock",
@@ -75,8 +61,6 @@ impl Hooks for Mod {
             ["text.bodymotion.holdUpTarget.NONE", "text.bodymotion.holdUpTarget.CAMERA"],
             1,
         ));
-        let pose = r.register_arm_pose("bodymotion:bow_custom_v1", true, true);
-        let _ = BOW_POSE.set(pose);
     }
 
     /// Once a frame: refresh the settings cache and flush edits. `client_tick_pre`
@@ -102,19 +86,6 @@ impl Hooks for Mod {
     // the config screen is never drawn.
     fn screen_render_post(&self, _host: &dyn ClientHost, _event: &mut ScreenRenderPostEvent<'_>) {}
 
-    /// Slightly damp the mouse turn while the custom bow draw is on, for a
-    /// steadier aim (one frame at a time; options are unchanged).
-    fn calculate_player_turn(
-        &self,
-        _host: &dyn ClientHost,
-        event: &mut CalculatePlayerTurnEvent,
-    ) {
-        let s = glue::settings();
-        if s.enabled && s.bow_mode == runtime::BowAnimation::CustomV1 {
-            event.mouse_sensitivity *= 0.85;
-        }
-    }
-
     fn screen_char_typed_pre(
         &self,
         _host: &dyn ClientHost,
@@ -123,49 +94,10 @@ impl Hooks for Mod {
         Flow::Continue
     }
 
-    /// Replace the arm pose for a drawn bow when the custom bow animation is
-    /// on. Asked for local players, remote players and humanoid mobs alike.
-    fn get_arm_pose(
-        &self,
-        _host: &dyn ClientHost,
-        event: &mut GetArmPoseEvent<'_>,
-    ) -> Option<ArmPose> {
-        let s = glue::settings();
-        if !s.enabled || s.bow_mode != runtime::BowAnimation::CustomV1 {
-            return None;
-        }
-        if event.humanoid.use_animation != UseAnimation::Bow {
-            return None;
-        }
-        BOW_POSE.get().copied().map(ArmPose::Custom)
-    }
-
-    /// Write the custom bow pose's arm angles. The old pose came from the
-    /// vanilla bow base plus deltas in `bm_anim`; that mixin still
-    /// runs afterwards, so this custom pose repeats the vanilla base exactly
-    /// (a level aim: the hook has no head pitch/yaw) and the old look returns.
-    fn arm_pose_transform(
-        &self,
-        _host: &dyn ClientHost,
-        event: &mut ArmPoseTransformEvent<'_>,
-    ) {
-        let Some(token) = BOW_POSE.get() else {
-            return;
-        };
-        if &event.pose != token {
-            return;
-        }
-        let x = -std::f32::consts::FRAC_PI_2;
-        if event.right_arm {
-            event.angles.right = [x, -0.1, 0.0];
-        } else {
-            event.angles.left = [x, 0.1, 0.0];
-        }
-    }
 }
 
 /// The toggles, in the screen's order: storage key, translation key, default.
-const TOGGLES: [(&str, &str, bool); 28] = [
+const TOGGLES: [(&str, &str, bool); 27] = [
     (
         "bodymotion.map3d",
         "text.bodymotion.enable.inworldmaprendering",
@@ -184,11 +116,6 @@ const TOGGLES: [(&str, &str, bool); 28] = [
     ("bodymotion.handoff", "text.bodymotion.enable.itemSwapAnimation", true),
     ("bodymotion.stroke", "text.bodymotion.enable.petAnimation", true),
     ("bodymotion.shiver", "text.bodymotion.enable.freezingAnimation", true),
-    (
-        "bodymotion.bow_lock",
-        "text.bodymotion.enable.customBowRotationLock",
-        false,
-    ),
     (
         "bodymotion.bow_clamp",
         "text.bodymotion.enable.clampCrossbowAnimations",

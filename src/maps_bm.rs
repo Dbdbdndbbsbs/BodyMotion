@@ -1,7 +1,7 @@
-// MapRendering: `map_rect` looks up a warmed map's atlas rect
-// (the entity pass cannot upload); `map_quads` draws the map texture and its
-// vanilla decorations at an already-computed pose. `map_paper_quads` draws
-// just the paper for an empty map, as vanilla and the mod show it.
+// The held map's atlas access: `map_rect` looks up a warmed map's rect
+// (the entity pass cannot upload); `map_quads` draws the map picture and its
+// vanilla decorations at an already-computed pose. `paper_quads` draws just
+// the paper for a map without data.
 use crate::game::Game;
 use crate::game::maps::{shown_on_frame, decoration_pose};
 use crate::hud::Rect;
@@ -135,8 +135,8 @@ pub(crate) fn map_quads(
     light: u32,
     out: &mut Vec<Vertex>,
 ) {
-    // the mod `MapRenderer.renderFirstPersonMap`: a map with data shows its
-    // texture over the checkerboard; one without is just paper.
+    // A map with drawn data shows its picture over the checkerboard; a map
+    // without any is just paper.
     let has_data = game.maps.data.contains_key(&id);
     if has_data {
         if let Some(r) = game
@@ -218,5 +218,25 @@ pub(crate) fn map_quads(
             [[s.u0, s.v0], [s.u1, s.v0], [s.u1, s.v1], [s.u0, s.v1]],
         );
         count += 1;
+    }
+    // The sheet is blank paper from behind: the picture is painted on its face
+    // only. Drawn last so it covers the picture where the pass does not depth
+    // sort these quads.
+    if has_data
+        && let Some(r) = game.gui.atlas.sprites.get("map/map_background").copied()
+    {
+        let corners = [
+            [-7.0, 135.0, 0.03],
+            [135.0, 135.0, 0.03],
+            [135.0, -7.0, 0.03],
+            [-7.0, -7.0, 0.03],
+        ];
+        let uv = [
+            [r.u0, r.v1],
+            [r.u1, r.v1],
+            [r.u1, r.v0],
+            [r.u0, r.v0],
+        ];
+        push_back_quad(m, corners, uv, r.u0, r.u1, light, out);
     }
 }
