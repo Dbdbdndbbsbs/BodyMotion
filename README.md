@@ -29,6 +29,7 @@ Manual install: put `bodymotion.hmod` into the instance's `horizon-native-mods/`
 
 - 0.3.1: rebuilt for **nightly-2026-11-22-2b77287**; new mod icon.
 - 0.3.1 (re-release): vanilla bow draw restored — the custom bow pose and bow-stance settings were removed.
+- 0.3.2: re-released under a fresh tag with the same rebuilt package (vanilla bow restored; registry metadata fixed).
 - Ported to the new native mod API (`api 0.2`) — no legacy `.hnmod`/mixin-patch files.
 - Custom settings screen instead of registry settings rows.
 - Map, lantern and item pose fixes (including filled maps in both hands).
